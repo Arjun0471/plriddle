@@ -7,8 +7,8 @@ const maxGuesses = 8;
 
 async function fetchFPLData() {
   try {
-    console.log('Attempting to fetch data from: https://arjun0471.github.io/plriddle/fpl-data-raw.json');
-    const response = await fetch('https://arjun0471.github.io/plriddle/fpl-data-raw.json');
+    console.log('Attempting to fetch data from: ./fpl-data-raw.json');
+    const response = await fetch('./fpl-data-raw.json'); // Relative path
     console.log('Fetch response:', response);
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
