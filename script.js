@@ -7,9 +7,7 @@ const maxGuesses = 8;
 
 async function fetchFPLData() {
   try {
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    const apiUrl = 'https://fantasy.premierleague.com/api/bootstrap-static/';
-    const response = await fetch(proxyUrl + apiUrl);
+    const response = await fetch('fpl-data-raw.json'); // Use the untrimmed file
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     const data = await response.json();
     const teams = data.teams.map(t => ({ name: t.name, short: t.short_name }));
@@ -19,7 +17,7 @@ async function fetchFPLData() {
         name: `${player.first_name} ${player.second_name}`,
         team: teams.find(t => t.id === player.team).name,
         position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
-        age: Math.floor(Math.random() * 15) + 20,
+        age: Math.floor(Math.random() * 15) + 20, // Still random, no birthdate in API
         appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
         goals: player.goals_scored,
         assists: player.assists,
@@ -27,8 +25,8 @@ async function fetchFPLData() {
       }));
     return { teams, players };
   } catch (error) {
-    console.error('Error fetching FPL data:', error);
-    showModal('Failed to load data. Enable CORS at cors-anywhere.herokuapp.com or refresh.');
+    console.error('Error loading FPL data:', error);
+    showModal('Failed to load player data. Check console or refresh.');
     return { teams: [], players: [] };
   }
 }
