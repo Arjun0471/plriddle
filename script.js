@@ -2,7 +2,7 @@ let players = [];
 let mysteryPlayer = null;
 let guesses = 0;
 let guessHistory = [];
-let user = null; // { username, streak }
+let user = null;
 const maxGuesses = 8;
 
 async function fetchFPLData() {
@@ -12,24 +12,23 @@ async function fetchFPLData() {
     const response = await fetch(proxyUrl + apiUrl);
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     const data = await response.json();
-    const teams = data.teams;
-    return {
-      teams: teams.map(t => ({ name: t.name, short: t.short_name })),
-      players: data.elements
-        .filter(player => player.element_type >= 1 && player.element_type <= 4)
-        .map(player => ({
-          name: `${player.first_name} ${player.second_name}`,
-          team: teams.find(t => t.id === player.team).name,
-          position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
-          age: Math.floor(Math.random() * 15) + 20,
-          appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
-          goals: player.goals_scored,
-          assists: player.assists,
-          code: player.code
-        }))
-    };
+    const teams = data.teams.map(t => ({ name: t.name, short: t.short_name }));
+    const players = data.elements
+      .filter(player => player.element_type >= 1 && player.element_type <= 4)
+      .map(player => ({
+        name: `${player.first_name} ${player.second_name}`,
+        team: teams.find(t => t.id === player.team).name,
+        position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
+        age: Math.floor(Math.random() * 15) + 20,
+        appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
+        goals: player.goals_scored,
+        assists: player.assists,
+        code: player.code
+      }));
+    return { teams, players };
   } catch (error) {
     console.error('Error fetching FPL data:', error);
+    showModal('Failed to load data. Enable CORS at cors-anywhere.herokuapp.com or refresh.');
     return { teams: [], players: [] };
   }
 }
@@ -136,6 +135,19 @@ function setupTeams(teams) {
     li.title = team.name;
     teamList.appendChild(li);
   });
+
+  const toggleBtn = document.getElementById('toggleTeams');
+  const sidebar = document.getElementById('teamSidebar');
+  const showBtn = document.getElementById('showTeamsBtn');
+  toggleBtn.onclick = () => {
+    sidebar.classList.toggle('hidden');
+    toggleBtn.textContent = sidebar.classList.contains('hidden') ? 'Show' : 'Hide';
+  };
+  showBtn.onclick = () => {
+    sidebar.style.display = 'block';
+    sidebar.classList.remove('hidden');
+    toggleBtn.textContent = 'Hide';
+  };
 }
 
 function setupDailyTip() {
@@ -169,12 +181,8 @@ function getShareText() {
 async function init() {
   const data = await fetchFPLData();
   players = data.players;
-  if (players.length === 0) {
-    showModal('Failed to load player data. Try refreshing or check your connection.');
-    return;
-  }
+  if (players.length === 0) return;
 
-  // Admin check (simple for now)
   user = JSON.parse(localStorage.getItem('user')) || null;
   if (user && user.username === 'admin') {
     const manualPlayer = prompt('Enter player name or leave blank for random:');

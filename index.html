@@ -22,8 +22,8 @@
       </div>
     </nav>
   </header>
-  <div class="sidebar left-sidebar">
-    <h3>Teams</h3>
+  <div class="sidebar left-sidebar" id="teamSidebar" style="display: none;">
+    <h3>Teams <button id="toggleTeams" class="toggle-btn">Hide</button></h3>
     <ul id="teamList"></ul>
   </div>
   <div class="sidebar right-sidebar">
@@ -32,7 +32,7 @@
   </div>
   <main>
     <div class="game-info">
-      <p>Guess the Premier League player in 8 tries. New player daily.</p>
+      <p>Guess the Premier League player in 8 tries. New player daily. <button id="showTeamsBtn" class="small-btn">Show Teams</button></p>
       <div class="guess-counter">Guesses: <span id="guessCount">0/8</span></div>
     </div>
     <div class="silhouette-area">
