@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login/Register - PL Riddle</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav class="top-nav">
+      <div class="nav-left">
+        <img src="https://www.premierleague.com/resources/ver/i/favicon/favicon.ico" alt="PL Logo" class="header-logo">
+        <h1>PL Riddle</h1>
+      </div>
+      <div class="nav-right">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="stats.html" class="nav-link">Stats</a>
+        <a href="how-to-play.html" class="nav-link">How to Play</a>
+        <a href="login.html" class="nav-link" id="authLink">Login/Register</a>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <div class="modal-content">
+      <h2>Login / Register</h2>
+      <form id="authForm">
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </main>
+  <footer>
+    <p>Designed by Arjun</p>
+  </footer>
+  <script>
+    const user = JSON.parse(localStorage.getItem('user'));
+    const authLink = document.getElementById('authLink');
+    if (user) {
+      authLink.textContent = `Logout (${user.username})`;
+      authLink.href = '#';
+      authLink.onclick = () => { localStorage.removeItem('user'); window.location.reload(); };
+    }
+    document.getElementById('authForm').onsubmit = (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      // Simple check (no backend yet)
+      if (password === '123') { // Dummy password check
+        localStorage.setItem('user', JSON.stringify({ username, streak: user?.streak || 0 }));
+        window.location.href = 'index.html';
+      } else {
+        alert('Invalid credentials. Use password "123" for now.');
+      }
+    };
+  </script>
+</body>
+</html>

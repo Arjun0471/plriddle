@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Play - PL Riddle</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <nav class="top-nav">
+      <div class="nav-left">
+        <img src="https://www.premierleague.com/resources/ver/i/favicon/favicon.ico" alt="PL Logo" class="header-logo">
+        <h1>PL Riddle</h1>
+      </div>
+      <div class="nav-right">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="stats.html" class="nav-link">Stats</a>
+        <a href="how-to-play.html" class="nav-link">How to Play</a>
+        <a href="login.html" class="nav-link" id="authLink">Login/Register</a>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <div class="modal-content">
+      <h2>How to Play</h2>
+      <p>Guess the Premier League player in 8 tries.</p>
+      <ul>
+        <li>Green: Exact match.</li>
+        <li>Yellow: Close (e.g., goals/assists within 2, age/apps within 5).</li>
+        <li>Gray: No match.</li>
+        <li>Arrows show if the mystery player has more or less.</li>
+        <li>Use the silhouette for a hint!</li>
+      </ul>
+      <button id="howToPlayClose" class="modal-close-btn">Close</button>
+    </div>
+  </main>
+  <footer>
+    <p>Designed by Arjun</p>
+  </footer>
+  <script>
+    document.getElementById('howToPlayClose').onclick = () => window.location.href = 'index.html';
+    const user = JSON.parse(localStorage.getItem('user'));
+    const authLink = document.getElementById('authLink');
+    if (user) {
+      authLink.textContent = `Logout (${user.username})`;
+      authLink.href = '#';
+      authLink.onclick = () => { localStorage.removeItem('user'); window.location.reload(); };
+    } else {
+      authLink.textContent = 'Login/Register';
+      authLink.href = 'login.html';
+    }
+  </script>
+</body>
+</html>
