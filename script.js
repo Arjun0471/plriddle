@@ -7,9 +7,12 @@ const maxGuesses = 8;
 
 async function fetchFPLData() {
   try {
-    const response = await fetch('fpl-data-raw.json'); // Use the untrimmed file
-    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    const response = await fetch('https://arjun0471.github.io/plriddle/fpl-data-raw.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
     const data = await response.json();
+    console.log('Fetched data:', data); // Debug log
     const teams = data.teams.map(t => ({ name: t.name, short: t.short_name }));
     const players = data.elements
       .filter(player => player.element_type >= 1 && player.element_type <= 4)
@@ -17,7 +20,7 @@ async function fetchFPLData() {
         name: `${player.first_name} ${player.second_name}`,
         team: teams.find(t => t.id === player.team).name,
         position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
-        age: Math.floor(Math.random() * 15) + 20, // Still random, no birthdate in API
+        age: Math.floor(Math.random() * 15) + 20,
         appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
         goals: player.goals_scored,
         assists: player.assists,
