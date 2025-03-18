@@ -8,19 +8,25 @@ const maxGuesses = 8;
 async function fetchFPLData() {
   try {
     console.log('Attempting to fetch data from: ./fpl-data-raw.json');
-    const response = await fetch('./fpl-data-raw.json'); // Relative path
+    const response = await fetch('./fpl-data-raw.json');
     console.log('Fetch response:', response);
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
+
     const data = await response.json();
     console.log('Fetched data successfully:', data);
-    const teams = data.teams.map(t => ({ name: t.name, short: t.short_name }));
+
+    if (!data.elements) {
+      throw new Error("Invalid JSON structure: 'elements' missing.");
+    }
+
     const players = data.elements
       .filter(player => player.element_type >= 1 && player.element_type <= 4)
       .map(player => ({
         name: `${player.first_name} ${player.second_name}`,
-        team: teams.find(t => t.id === player.team).name,
+        team: `Team ${player.team}`, // Placeholder since 'teams' data is missing
         position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
         age: Math.floor(Math.random() * 15) + 20,
         appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
@@ -28,14 +34,16 @@ async function fetchFPLData() {
         assists: player.assists,
         code: player.code
       }));
-    console.log('Processed teams and players:', { teams, players });
-    return { teams, players };
+
+    console.log('Processed players:', players);
+    return { players };
   } catch (error) {
     console.error('Error loading FPL data:', error);
     showModal('Failed to load player data. Check console or refresh.');
-    return { teams: [], players: [] };
+    return { players: [] };
   }
 }
+
 
 function getDailyPlayer(players) {
   const today = new Date().toDateString();
