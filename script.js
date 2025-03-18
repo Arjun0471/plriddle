@@ -7,12 +7,14 @@ const maxGuesses = 8;
 
 async function fetchFPLData() {
   try {
+    console.log('Attempting to fetch data from: https://arjun0471.github.io/plriddle/fpl-data-raw.json');
     const response = await fetch('https://arjun0471.github.io/plriddle/fpl-data-raw.json');
+    console.log('Fetch response:', response);
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
     const data = await response.json();
-    console.log('Fetched data:', data); // Debug log
+    console.log('Fetched data successfully:', data);
     const teams = data.teams.map(t => ({ name: t.name, short: t.short_name }));
     const players = data.elements
       .filter(player => player.element_type >= 1 && player.element_type <= 4)
@@ -26,6 +28,7 @@ async function fetchFPLData() {
         assists: player.assists,
         code: player.code
       }));
+    console.log('Processed teams and players:', { teams, players });
     return { teams, players };
   } catch (error) {
     console.error('Error loading FPL data:', error);
