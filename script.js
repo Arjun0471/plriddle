@@ -46,7 +46,7 @@ async function fetchFPLData() {
     const currentDate = new Date('2025-03-18');
     players = data.elements
       .filter(player => player.element_type >= 1 && player.element_type <= 4)
-      .map(player => {
+      .map((player, index) => {
         let age = null;
         if (player.birth_date) {
           const birthDate = new Date(player.birth_date);
@@ -67,7 +67,7 @@ async function fetchFPLData() {
           goals: player.goals_scored,
           assists: player.assists,
           code: player.code,
-          funFact: getFunFact(player)
+          index: index
         };
       });
 
@@ -79,17 +79,6 @@ async function fetchFPLData() {
     spinner.style.display = 'none';
     return { players: [] };
   }
-}
-
-function getFunFact(player) {
-  const facts = [
-    `Once scored a hat-trick in a single Premier League match!`,
-    `Is known for their incredible work rate on the pitch.`,
-    `Has represented their national team in a major tournament.`,
-    `Started their career in a lower division before making it to the Premier League.`,
-    `Is a fan favorite for their leadership qualities.`
-  ];
-  return facts[Math.floor(Math.random() * facts.length)];
 }
 
 function getDailyPlayer(players) {
@@ -165,7 +154,7 @@ function setupAutocomplete() {
 
 function setupSilhouette() {
   const silhouette = document.getElementById('silhouette');
-  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${mysteryPlayer.code}.png`;
+  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
   silhouette.style.display = 'block';
 
   const toggleButton = document.getElementById('toggleSilhouette');
@@ -201,12 +190,13 @@ function randomizePlayer() {
   updateGuessCounter();
   document.querySelector('#guessTable tbody').innerHTML = '';
   document.getElementById('playerInput').disabled = false;
+  document.getElementById('playerInput').value = '';
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
 
   mysteryPlayer = getDailyPlayer(players);
 
   const silhouette = document.getElementById('silhouette');
-  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${mysteryPlayer.code}.png`;
+  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
   silhouette.classList.remove('shown', 'revealed');
   document.getElementById('toggleSilhouette').textContent = 'Show Silhouette';
   document.getElementById('toggleSilhouette').disabled = false;
@@ -288,19 +278,20 @@ function setupCustomPlayer() {
   updateGuessCounter();
   document.querySelector('#guessTable tbody').innerHTML = '';
   document.getElementById('playerInput').disabled = false;
+  document.getElementById('playerInput').value = '';
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
 
   mysteryPlayer = selectedPlayer;
 
   const silhouette = document.getElementById('silhouette');
-  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${mysteryPlayer.code}.png`;
+  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
   silhouette.classList.remove('shown', 'revealed');
   document.getElementById('toggleSilhouette').textContent = 'Show Silhouette';
   document.getElementById('toggleSilhouette').disabled = false;
 
   document.getElementById('modal').style.display = 'none';
 
-  const customLink = `${window.location.origin}${window.location.pathname}?player=${encodeURIComponent(mysteryPlayer.name)}`;
+  const customLink = `${window.location.origin}${window.location.pathname}?pid=${selectedPlayer.index}`;
   navigator.clipboard.writeText(customLink);
   alert(`Custom challenge link copied to clipboard: ${customLink}`);
 }
@@ -344,29 +335,17 @@ function setupMobileMenu() {
   });
 }
 
-function setupDarkMode() {
-  const darkModeToggle = document.getElementById('darkModeToggle');
-  const isDarkMode = localStorage.getItem('darkMode') === 'true';
-  if (isDarkMode) {
-    document.body.classList.add('dark-mode');
-    darkModeToggle.textContent = 'Light Mode';
-  }
-  darkModeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDark);
-    darkModeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
-  });
-}
-
 function setupSoundToggle() {
   const soundToggle = document.getElementById('soundToggle');
+  const soundIcon = document.getElementById('soundIcon');
   const isSoundOn = localStorage.getItem('soundOn') !== 'false';
-  soundToggle.textContent = `Sound: ${isSoundOn ? 'On' : 'Off'}`;
+  soundIcon.src = isSoundOn ? 'assets/images/sound-on.png' : 'assets/images/sound-off.png';
+  soundIcon.alt = isSoundOn ? 'Sound On' : 'Sound Off';
   soundToggle.addEventListener('click', () => {
     const newState = localStorage.getItem('soundOn') !== 'false';
     localStorage.setItem('soundOn', !newState);
-    soundToggle.textContent = `Sound: ${!newState ? 'On' : 'Off'}`;
+    soundIcon.src = !newState ? 'assets/images/sound-on.png' : 'assets/images/sound-off.png';
+    soundIcon.alt = !newState ? 'Sound On' : 'Sound Off';
   });
 }
 
@@ -422,6 +401,9 @@ function updateTimerDisplay() {
 }
 
 function resetTimer() {
+  clearInterval(timerInterval);
+  timeLeft = 120;
+  updateTimerDisplay();
   if (localStorage.getItem('timedMode') === 'true') {
     startTimer();
   }
@@ -518,15 +500,16 @@ function updateStats(won) {
 
 async function init() {
   const urlParams = new URLSearchParams(window.location.search);
-  const customPlayerName = urlParams.get('player');
+  const customPlayerIndex = urlParams.get('pid');
 
   const data = await fetchFPLData();
   players = data.players;
   if (players.length === 0) return;
 
   user = JSON.parse(localStorage.getItem('user')) || null;
-  if (customPlayerName) {
-    mysteryPlayer = players.find(p => p.name.toLowerCase() === customPlayerName.toLowerCase()) || getDailyPlayer(players);
+  if (customPlayerIndex) {
+    const index = parseInt(customPlayerIndex, 10);
+    mysteryPlayer = players[index] || getDailyPlayer(players);
   } else if (user && user.username === 'admin') {
     const manualPlayer = prompt('Enter player name or leave blank for random:');
     if (manualPlayer) {
@@ -542,7 +525,6 @@ async function init() {
   setupSilhouette();
   setupDailyTip();
   setupMobileMenu();
-  setupDarkMode();
   setupSoundToggle();
   setupTimedMode();
   updateAuthLink();
@@ -558,19 +540,11 @@ function showModal(message, showShare = false) {
   const shareBtn = document.getElementById('shareBtn');
   const tweetBtn = document.getElementById('tweetBtn');
   const closeGameBtn = document.getElementById('closeGameBtn');
-  const playerProfile = document.getElementById('playerProfile');
 
   result.textContent = message;
   shareBtn.style.display = showShare ? 'inline-block' : 'none';
   tweetBtn.style.display = showShare ? 'inline-block' : 'none';
   closeGameBtn.style.display = showShare ? 'inline-block' : 'none';
-
-  if (showShare && mysteryPlayer) {
-    playerProfile.style.display = 'block';
-    playerProfile.innerHTML = `<strong>Player Profile:</strong><br>Fun Fact: ${mysteryPlayer.funFact}`;
-  } else {
-    playerProfile.style.display = 'none';
-  }
 
   modal.style.display = 'block';
   modal.classList.add('active');
@@ -693,6 +667,24 @@ function updateAuthLink() {
     authLink.textContent = 'Login/Register';
     authLink.href = 'login.html';
   }
+}
+
+function setupSoundToggle() {
+  const soundToggle = document.getElementById('soundToggle');
+  const soundIcon = document.getElementById('soundIcon');
+  const isSoundOn = localStorage.getItem('soundOn') !== 'false';
+  soundIcon.src = isSoundOn ? 'assets/images/sound-on.svg' : 'assets/images/sound-off.svg';
+  soundIcon.alt = isSoundOn ? 'Sound On' : 'Sound Off';
+  soundIcon.classList.remove('sound-on', 'sound-off');
+  soundIcon.classList.add(isSoundOn ? 'sound-on' : 'sound-off');
+  soundToggle.addEventListener('click', () => {
+    const newState = localStorage.getItem('soundOn') !== 'false';
+    localStorage.setItem('soundOn', !newState);
+    soundIcon.src = !newState ? 'assets/images/sound-on.svg' : 'assets/images/sound-off.svg';
+    soundIcon.alt = !newState ? 'Sound On' : 'Sound Off';
+    soundIcon.classList.remove('sound-on', 'sound-off');
+    soundIcon.classList.add(!newState ? 'sound-on' : 'sound-off');
+  });
 }
 
 window.onload = init;

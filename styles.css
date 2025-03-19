@@ -6,50 +6,14 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #fef9c3 100%) url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"%3E%3Cpath d="M20 0L40 20L20 40L0 20Z" fill="%23fff" opacity="0.1"/%3E%3C/svg%3E') repeat;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #fef9c3 100%) url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"%3E%3Cpath d="M20 0L40 20L20 40L0 20Z" fill="%23fff" opacity="0.1"/%3E%3C/svg%3E') repeat, url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" opacity="0.05"%3E%3Crect width="800" height="400" fill="%23e0e0e0"/%3E%3Crect x="50" y="50" width="700" height="300" fill="none" stroke="%23fff" stroke-width="10"/%3E%3Crect x="50" y="50" width="150" height="300" fill="none" stroke="%23fff" stroke-width="10"/%3E%3Crect x="600" y="50" width="150" height="300" fill="none" stroke="%23fff" stroke-width="10"/%3E%3Crect x="50" y="125" width="150" height="150" fill="none" stroke="%23fff" stroke-width="10"/%3E%3Crect x="600" y="125" width="150" height="150" fill="none" stroke="%23fff" stroke-width="10"/%3E%3Ccircle cx="400" cy="200" r="50" fill="none" stroke="%23fff" stroke-width="10"/%3E%3Cline x1="400" y1="50" x2="400" y2="350" stroke="%23fff" stroke-width="10"/%3E%3C/svg%3E') center center fixed;
+  background-size: cover;
   color: #1f2937;
   line-height: 1.6;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: background 0.3s, color 0.3s;
-}
-
-body.dark-mode {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #a16207 100%) url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"%3E%3Cpath d="M20 0L40 20L20 40L0 20Z" fill="%23fff" opacity="0.1"/%3E%3C/svg%3E') repeat;
-  color: #e5e7eb;
-}
-
-body.dark-mode header,
-body.dark-mode .modal-content,
-body.dark-mode .suggestions,
-body.dark-mode th {
-  background: #1f2937;
-  color: #e5e7eb;
-}
-
-body.dark-mode .nav-link,
-body.dark-mode .nav-link:hover {
-  color: #e5e7eb;
-  background-color: #374151;
-}
-
-body.dark-mode main,
-body.dark-mode .game-info,
-body.dark-mode .silhouette-area,
-body.dark-mode .input-area,
-body.dark-mode table,
-body.dark-mode .sidebar {
-  background: rgba(31, 41, 55, 0.8);
-  color: #e5e7eb;
-}
-
-body.dark-mode .stats-container,
-body.dark-mode .guess-distribution,
-body.dark-mode .achievements-list li {
-  background: rgba(31, 41, 55, 0.8);
-  color: #e5e7eb;
 }
 
 header {
@@ -116,6 +80,58 @@ header h1 {
   transform: translateY(-2px);
 }
 
+.sound-toggle img {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+/* Existing styles for .sound-toggle */
+.sound-toggle img {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+/* Add a class for the sound icon */
+.sound-icon {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Animation for Sound On (wave effect) */
+.sound-icon.sound-on {
+  animation: wave 1s ease infinite;
+}
+
+/* Animation for Sound Off (slash effect) */
+.sound-icon.sound-off {
+  animation: slash 0.5s ease;
+}
+
+/* Wave animation for Sound On */
+@keyframes wave {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+/* Slash animation for Sound Off */
+@keyframes slash {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotate(45deg);
+    opacity: 1;
+  }
+}
+
 .menu-toggle {
   display: none;
   font-size: 1.8em;
@@ -153,12 +169,7 @@ header h1 {
   cursor: pointer;
   display: flex;
   justify-content: space-between;
- Ascending: true;
   align-items: center;
-}
-
-body.dark-mode .sidebar h3 {
-  color: #3b82f6;
 }
 
 .sidebar h3::after {
@@ -177,10 +188,6 @@ body.dark-mode .sidebar h3 {
   color: #d97706;
   word-wrap: break-word;
   line-height: 1.4;
-}
-
-body.dark-mode #dailyTip {
-  color: #f59e0b;
 }
 
 .sidebar.collapsed #dailyTip {
@@ -210,11 +217,6 @@ main {
   margin: 20px auto;
 }
 
-body.dark-mode .spinner {
-  border: 5px solid #4b5563;
-  border-top: 5px solid #3b82f6;
-}
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -234,18 +236,10 @@ body.dark-mode .spinner {
   margin-bottom: 8px;
 }
 
-body.dark-mode .game-info p {
-  color: #9ca3af;
-}
-
 .guess-counter {
   font-size: 1.2em;
   font-weight: 700;
   color: #1d4ed8;
-}
-
-body.dark-mode .guess-counter {
-  color: #3b82f6;
 }
 
 #timer {
@@ -253,10 +247,6 @@ body.dark-mode .guess-counter {
   font-weight: 700;
   color: #d97706;
   margin-top: 10px;
-}
-
-body.dark-mode #timer {
-  color: #f59e0b;
 }
 
 .silhouette-area {
@@ -271,7 +261,7 @@ body.dark-mode #timer {
 }
 
 #silhouette {
-  width: 120px;
+  width: 150px;
   height: 150px;
   filter: grayscale(100%) contrast(1000%) brightness(0%) blur(5px);
   transition: filter 0.5s ease, transform 0.4s ease;
@@ -279,6 +269,8 @@ body.dark-mode #timer {
   border-radius: 8px;
   margin: 0 auto;
   display: block;
+  object-fit: cover;
+  object-position: top;
 }
 
 #silhouette.shown {
@@ -293,8 +285,7 @@ body.dark-mode #timer {
 
 #toggleSilhouette,
 #newPlayerBtn,
-#getHintBtn,
-#customPlayerBtn {
+#getHintBtn {
   padding: 10px 20px;
   font-size: 1em;
   color: white;
@@ -337,16 +328,6 @@ body.dark-mode #timer {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-#customPlayerBtn {
-  background: linear-gradient(45deg, #8b5cf6, #a78bfa);
-}
-
-#customPlayerBtn:hover {
-  background: linear-gradient(45deg, #7c3aed, #8b5cf6);
-  transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
 .input-area {
   display: flex;
   justify-content: center;
@@ -369,20 +350,9 @@ body.dark-mode #timer {
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-body.dark-mode #playerInput {
-  border-color: #4b5563;
-  background: #374151;
-  color: #e5e7eb;
-}
-
 #playerInput:focus {
   border-color: #1d4ed8;
   box-shadow: 0 0 10px rgba(29, 78, 216, 0.6);
-}
-
-body.dark-mode #playerInput:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
 }
 
 .suggestions {
@@ -412,11 +382,6 @@ body.dark-mode #playerInput:focus {
 .suggestions li:hover,
 .suggestions li.selected {
   background-color: #f3f4f6;
-}
-
-body.dark-mode .suggestions li:hover,
-body.dark-mode .suggestions li.selected {
-  background-color: #4b5563;
 }
 
 button {
@@ -452,10 +417,6 @@ table {
   border: 3px solid #1d4ed8;
 }
 
-body.dark-mode table {
-  border-color: #3b82f6;
-}
-
 th,
 td {
   width: 14.28%;
@@ -468,12 +429,6 @@ td {
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: background-color 0.3s, transform 0.2s;
-}
-
-body.dark-mode th,
-body.dark-mode td {
-  border-bottom: 2px solid #4b5563;
-  border-right: 1px solid #4b5563;
 }
 
 th:last-child,
@@ -492,10 +447,6 @@ th {
 td:hover {
   transform: translateY(-2px);
   background-color: rgba(0, 0, 0, 0.02);
-}
-
-body.dark-mode td:hover {
-  background-color: rgba(255, 255, 255, 0.02);
 }
 
 table tbody tr {
@@ -527,7 +478,7 @@ table tbody tr:hover {
 }
 
 .gray {
-  background-color: #f87171 !important;
+  background-color: #b91c1c !important;
   color: white;
   animation: pop 0.2s ease;
 }
@@ -609,10 +560,6 @@ table tbody tr:hover {
   transition: transform 0.4s ease;
 }
 
-body.dark-mode .modal-content {
-  border-color: #3b82f6;
-}
-
 .modal.active .modal-content {
   transform: scale(1);
 }
@@ -622,10 +569,6 @@ body.dark-mode .modal-content {
   margin-bottom: 15px;
   color: #1d4ed8;
   font-weight: 700;
-}
-
-body.dark-mode .modal-content h2 {
-  color: #3b82f6;
 }
 
 .modal-content ul {
@@ -638,16 +581,6 @@ body.dark-mode .modal-content h2 {
 .modal-content li {
   margin: 8px 0;
   font-size: 1em;
-}
-
-#playerProfile {
-  text-align: left;
-  font-size: 1em;
-  color: #4b5563;
-}
-
-body.dark-mode #playerProfile {
-  color: #9ca3af;
 }
 
 .modal-buttons {
@@ -714,14 +647,6 @@ body.dark-mode #playerProfile {
   color: #1f2937;
 }
 
-body.dark-mode .close {
-  color: #9ca3af;
-}
-
-body.dark-mode .close:hover {
-  color: #e5e7eb;
-}
-
 form {
   display: flex;
   flex-direction: column;
@@ -734,21 +659,11 @@ form {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-body.dark-mode form {
-  background: rgba(31, 41, 55, 0.95);
-}
-
 form input {
   padding: 12px;
   border: 2px solid #d1d5db;
   border-radius: 6px;
   font-size: 1.1em;
-}
-
-body.dark-mode form input {
-  border-color: #4b5563;
-  background: #374151;
-  color: #e5e7eb;
 }
 
 form button {
@@ -767,8 +682,13 @@ h2 {
   color: #1d4ed8;
 }
 
-body.dark-mode h2 {
-  color: #3b82f6;
+p a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+p a:hover {
+  text-decoration: underline;
 }
 
 .stats-container {
@@ -784,10 +704,6 @@ body.dark-mode h2 {
   font-size: 1.1em;
   margin: 10px 0;
   color: #4b5563;
-}
-
-body.dark-mode .stats-container p {
-  color: #9ca3af;
 }
 
 .guess-distribution {
@@ -807,10 +723,6 @@ body.dark-mode .stats-container p {
   color: #4b5563;
 }
 
-body.dark-mode .distribution-row span {
-  color: #9ca3af;
-}
-
 .distribution-bar {
   height: 20px;
   background-color: #1d4ed8;
@@ -823,18 +735,10 @@ body.dark-mode .distribution-row span {
   min-width: 20px;
 }
 
-body.dark-mode .distribution-bar {
-  background-color: #3b82f6;
-}
-
 h3 {
   font-size: 1.5em;
   margin: 15px 0 10px;
   color: #1d4ed8;
-}
-
-body.dark-mode h3 {
-  color: #3b82f6;
 }
 
 .achievements-list {
@@ -852,18 +756,9 @@ body.dark-mode h3 {
   color: #1f2937;
 }
 
-body.dark-mode .achievements-list li {
-  color: #e5e7eb;
-}
-
 .achievements-list li.locked {
   background: rgba(0, 0, 0, 0.1);
   color: #6b7280;
-}
-
-body.dark-mode .achievements-list li.locked {
-  background: rgba(255, 255, 255, 0.1);
-  color: #9ca3af;
 }
 
 @media (max-width: 600px) {
@@ -881,10 +776,6 @@ body.dark-mode .achievements-list li.locked {
     width: 100%;
     padding: 15px;
     z-index: 1000;
-  }
-
-  body.dark-mode .top-nav {
-    background: #1f2937;
   }
 
   .top-nav.active {
@@ -912,8 +803,8 @@ body.dark-mode .achievements-list li.locked {
   }
 
   #silhouette {
-    width: 90px;
-    height: 115px;
+    width: 120px;
+    height: 120px;
   }
 
   .input-area {
@@ -964,8 +855,7 @@ body.dark-mode .achievements-list li.locked {
 
   #toggleSilhouette,
   #newPlayerBtn,
-  #getHintBtn,
-  #customPlayerBtn {
+  #getHintBtn {
     font-size: 0.9em;
     padding: 8px 16px;
   }

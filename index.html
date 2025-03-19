@@ -20,9 +20,12 @@
         <a href="index.html" class="nav-link">Home</a>
         <a href="stats.html" class="nav-link">Stats</a>
         <a href="how-to-play.html" class="nav-link">How to Play</a>
+        <a href="credits.html" class="nav-link">Credits</a>
         <a href="login.html" class="nav-link" id="authLink">Login/Register</a>
-        <button id="darkModeToggle" class="nav-link">Dark Mode</button>
-        <button id="soundToggle" class="nav-link">Sound: On</button>
+        <button id="customPlayerBtn" class="nav-link">Custom Player</button>
+        <button id="soundToggle" class="nav-link sound-toggle">
+          <img src="assets/images/sound-on.svg" alt="Sound On" id="soundIcon" class="sound-icon">
+        </button>
         <button id="timedModeToggle" class="nav-link">Timed Mode: Off</button>
       </div>
     </nav>
@@ -46,7 +49,6 @@
       <button id="toggleSilhouette">Show Silhouette</button>
       <button id="newPlayerBtn">New Player</button>
       <button id="getHintBtn">Get Hint</button>
-      <button id="customPlayerBtn">Custom Player</button>
     </div>
     <div class="input-area">
       <input type="text" id="playerInput" placeholder="Type a player name..." autocomplete="off">
@@ -72,7 +74,6 @@
     <div class="modal-content">
       <span id="modalClose" class="close">×</span>
       <p id="result"></p>
-      <div id="playerProfile" style="display: none; margin-top: 15px;"></div>
       <div class="modal-buttons">
         <button id="shareBtn" style="display: none;">Share</button>
         <button id="tweetBtn" style="display: none;">Tweet</button>
