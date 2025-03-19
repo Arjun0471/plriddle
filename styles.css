@@ -120,6 +120,7 @@ header h1 {
 #dailyTip {
   font-size: 0.85em;
   color: #d97706;
+  word-wrap: break-word; /* Ensure text wraps properly */
 }
 
 main {
@@ -580,24 +581,31 @@ form button:hover {
 
   #playerInput {
     width: 100%;
+    font-size: 1em; /* Slightly larger text for readability */
   }
 
   .suggestions {
     width: 100%;
+    font-size: 0.9em; /* Adjust suggestion text size */
   }
 
   .sidebar {
-    width: 140px;
-    top: 50px;
-    right: 5px;
+    position: static; /* Remove fixed positioning on mobile */
+    width: 100%; /* Full width on mobile */
+    top: auto; /* Remove top positioning */
+    right: auto; /* Remove right positioning */
+    margin: 10px 0; /* Add margin for spacing */
+    box-shadow: none; /* Remove shadow on mobile */
+    transition: none; /* Disable transition on mobile */
   }
 
   .sidebar h3 {
-    font-size: 0.9em;
+    font-size: 1em;
   }
 
   #dailyTip {
-    font-size: 0.75em;
+    font-size: 1em; /* Increase text size for readability */
+    padding: 8px; /* Add padding for better spacing */
   }
 
   table {
@@ -608,12 +616,20 @@ form button:hover {
 
   th, td {
     width: auto;
-    font-size: 0.75em;
-    padding: 8px 4px;
+    font-size: 0.85em; /* Slightly larger text for mobile */
+    padding: 8px 6px; /* Increase padding for readability */
     display: table-cell;
   }
 
   tr {
     display: table-row;
+  }
+
+  .game-info p {
+    font-size: 0.9em; /* Adjust game info text */
+  }
+
+  .guess-counter {
+    font-size: 1em; /* Adjust counter text */
   }
 }
