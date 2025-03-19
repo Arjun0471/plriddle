@@ -6,15 +6,15 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Ccircle cx="10" cy="10" r="1" fill="%23fff" opacity="0.1"/%3E%3C/svg%3E') repeat;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #fef9c3 100%) url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Ccircle cx="10" cy="10" r="1" fill="%23fff" opacity="0.1"/%3E%3C/svg%3E') repeat;
   color: #1f2937;
   line-height: 1.5;
 }
 
 header {
-  background-color: #0d9488;
+  background: linear-gradient(90deg, #0d9488, #14b8a6);
   padding: 10px 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .top-nav {
@@ -73,16 +73,12 @@ header h1 {
   padding: 10px;
   background-color: #fff;
   border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  transition: transform 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.left-sidebar {
-  left: 10px;
-}
-
-.left-sidebar.hidden {
-  transform: translateX(-200px);
+.sidebar:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .right-sidebar {
@@ -92,20 +88,10 @@ header h1 {
 .sidebar h3 {
   font-size: 1em;
   margin-bottom: 8px;
-  color: #0d9488;
+  color: #14b8a6;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.toggle-btn {
-  font-size: 0.75em;
-  padding: 2px 6px;
-  background-color: #6b7280;
-}
-
-.toggle-btn:hover {
-  background-color: #4b5563;
 }
 
 .sidebar ul {
@@ -119,7 +105,7 @@ header h1 {
 
 #dailyTip {
   font-size: 0.85em;
-  color: #4b5563;
+  color: #d97706;
 }
 
 main {
@@ -138,25 +124,10 @@ main {
   color: #4b5563;
 }
 
-.small-btn {
-  font-size: 0.8em;
-  padding: 2px 8px;
-  background-color: #0d9488;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-left: 5px;
-}
-
-.small-btn:hover {
-  background-color: #0f766e;
-}
-
 .guess-counter {
   font-size: 1.1em;
   font-weight: 700;
-  color: #0d9488;
+  color: #14b8a6;
 }
 
 .silhouette-area {
@@ -168,33 +139,38 @@ main {
   width: 100px;
   height: 128px;
   filter: grayscale(100%) contrast(1000%) brightness(0%) blur(5px);
-  transition: filter 0.4s ease;
+  transition: filter 0.4s ease, transform 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 #silhouette.shown {
   filter: grayscale(100%) contrast(1000%) brightness(0%);
+  transform: scale(1.05);
 }
 
 #silhouette.revealed {
   filter: none;
+  transform: scale(1.1);
 }
 
 #toggleSilhouette {
   padding: 6px 14px;
   font-size: 0.85em;
-  background-color: #6b7280;
+  background: linear-gradient(45deg, #14b8a6, #22d3ee);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   text-transform: uppercase;
   margin-top: 8px;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 #toggleSilhouette:hover {
-  background-color: #4b5563;
-  transform: translateY(-1px);
+  background: linear-gradient(45deg, #0d9488, #06b6d4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .input-area {
@@ -203,6 +179,10 @@ main {
   gap: 8px;
   margin-bottom: 15px;
   position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
 }
 
 #playerInput {
@@ -213,11 +193,12 @@ main {
   border-radius: 4px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 #playerInput:focus {
   border-color: #0d9488;
-  box-shadow: 0 0 4px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 0 8px rgba(13, 148, 136, 0.5);
 }
 
 .suggestions {
@@ -251,18 +232,20 @@ main {
 button {
   padding: 8px 20px;
   font-size: 0.95em;
-  background-color: #0d9488;
+  background: linear-gradient(45deg, #14b8a6, #22d3ee);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
-  background-color: #0f766e;
-  transform: translateY(-1px);
+  background: linear-gradient(45deg, #0d9488, #06b6d4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 table {
@@ -292,20 +275,37 @@ th {
 td {
   background-color: #fff;
   font-weight: 500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 12px;
+  font-size: 0.9em;
+  text-align: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+table tr {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+table tr:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .green {
-  background-color: #10b981 !important;
+  background-color: #22c55e !important;
   color: white;
 }
 
 .yellow {
-  background-color: #f59e0b !important;
+  background-color: #eab308 !important;
   color: white;
 }
 
 .gray {
-  background-color: #6b7280 !important;
+  background-color: #9ca3af !important;
   color: white;
 }
 
@@ -315,6 +315,8 @@ td {
   height: 10px;
   margin-left: 5px;
   vertical-align: middle;
+  position: relative;
+  top: -1px;
 }
 
 .arrow-up {
@@ -347,7 +349,12 @@ td {
   width: 100%;
   height: 100%;
   background-color: rgba(0,0,0,0.5);
-  transition: opacity 0.3s;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal.active {
+  opacity: 1;
 }
 
 .modal-content {
@@ -359,6 +366,13 @@ td {
   border-radius: 8px;
   text-align: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border: 2px solid #14b8a6;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.modal.active .modal-content {
+  transform: scale(1);
 }
 
 .modal-content h2 {
@@ -428,8 +442,8 @@ td {
 footer {
   text-align: center;
   padding: 10px;
-  background-color: #fff;
-  box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+  background: linear-gradient(90deg, #0d9488, #14b8a6);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
   position: fixed;
   bottom: 0;
   width: 100%;
@@ -437,7 +451,7 @@ footer {
 
 footer p {
   font-size: 0.9em;
-  color: #4b5563;
+  color: #fff; /* Change to white for contrast with gradient */
 }
 
 form {
@@ -455,9 +469,9 @@ form input {
 }
 
 form button {
-  background-color: #0d9488;
+  background: linear-gradient(45deg, #14b8a6, #22d3ee);
 }
 
 form button:hover {
-  background-color: #0f766e;
+  background: linear-gradient(45deg, #0d9488, #06b6d4);
 }

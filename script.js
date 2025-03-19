@@ -61,7 +61,7 @@ async function fetchFPLData() {
 
         return {
           name: `${player.first_name} ${player.second_name}`,
-          team: teamMapping[player.team] || `Team ${player.team}`, // Use mapping or fallback
+          team: teamMapping[player.team] || `Team ${player.team}`,
           position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
           age: age,
           appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
@@ -79,7 +79,6 @@ async function fetchFPLData() {
     return { players: [] };
   }
 }
-
 
 function getDailyPlayer(players) {
   const today = new Date().toDateString();
@@ -175,35 +174,18 @@ function revealImage() {
   document.getElementById('toggleSilhouette').disabled = true;
 }
 
-function setupTeams(teams) {
-  const teamList = document.getElementById('teamList');
-  teams.forEach(team => {
-    const li = document.createElement('li');
-    li.textContent = team.short;
-    li.title = team.name;
-    teamList.appendChild(li);
-  });
-
-  const toggleBtn = document.getElementById('toggleTeams');
-  const sidebar = document.getElementById('teamSidebar');
-  const showBtn = document.getElementById('showTeamsBtn');
-  toggleBtn.onclick = () => {
-    sidebar.classList.toggle('hidden');
-    toggleBtn.textContent = sidebar.classList.contains('hidden') ? 'Show' : 'Hide';
-  };
-  showBtn.onclick = () => {
-    sidebar.style.display = 'block';
-    sidebar.classList.remove('hidden');
-    toggleBtn.textContent = 'Hide';
-  };
-}
-
 function setupDailyTip() {
   const tips = [
     "Check the silhouette for position hints!",
     "Midfielders often have high assists.",
     "Young players may have fewer appearances.",
-    "Goalkeepers rarely score goals."
+    "Goalkeepers rarely score goals.",
+    "Strikers typically have more goals than assists.",
+    "Defenders might have fewer goals but more appearances.",
+    "Players from top teams often have more assists.",
+    "Age can hint at experience—older players may have more apps!",
+    "Newly promoted teams might have players with fewer PL appearances.",
+    "Some players have zero goals—don’t assume everyone scores!"
   ];
   const tip = tips[Math.floor(Math.random() * tips.length)];
   document.getElementById('dailyTip').textContent = tip;
@@ -245,12 +227,6 @@ async function init() {
 
   setupAutocomplete();
   setupSilhouette();
-  // Use teamMapping to create a teams array for the sidebar
-  const teams = Object.values(teamMapping).map((name, index) => ({
-    short: name,
-    name: name
-  }));
-  setupTeams(teams);
   setupDailyTip();
   updateAuthLink();
 }
@@ -268,6 +244,7 @@ function showModal(message, showShare = false) {
   shareBtn.style.display = showShare ? 'inline-block' : 'none';
   closeGameBtn.style.display = showShare ? 'inline-block' : 'none';
   modal.style.display = 'block';
+  modal.classList.add('active');
   if (showShare) {
     shareBtn.onclick = () => {
       navigator.clipboard.writeText(getShareText());
