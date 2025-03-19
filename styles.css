@@ -1,3 +1,29 @@
+:root {
+  --bg-gradient-start: #f0f4ff;
+  --bg-gradient-end: #e0e7ff;
+  --game-bg-start: #ffffff;
+  --game-bg-end: #f0f4ff;
+  --text-color: #333;
+  --header-bg: #1e3a8a;
+  --hover-bg: #e0e7ff;
+  --table-header-bg: #f4f4f4;
+  --border-color: #ccc;
+  --shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] {
+  --bg-gradient-start: #1a202c;
+  --bg-gradient-end: #2d3748;
+  --game-bg-start: #2d3748;
+  --game-bg-end: #4a5568;
+  --text-color: #e2e8f0;
+  --header-bg: #2b6cb0;
+  --hover-bg: #4a5568;
+  --table-header-bg: #4a5568;
+  --border-color: #4a5568;
+  --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,23 +32,24 @@
 }
 
 body {
-  background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
-  color: #333;
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  color: var(--text-color);
   line-height: 1.6;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  transition: background 0.3s ease;
 }
 
 header {
-  background-color: #1e3a8a;
-  color: white;
+  background-color: var(--header-bg);
+  color: var(--text-color);
   padding: 1rem;
   text-align: center;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 header h1 {
@@ -31,74 +58,38 @@ header h1 {
   animation: fadeIn 1s ease-in-out;
 }
 
-header nav a {
-  color: white;
+header nav a,
+header nav button {
+  color: var(--text-color);
   text-decoration: none;
   margin: 0 1rem;
   font-size: 0.9rem;
   transition: color 0.3s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
-header nav a:hover {
+header nav a:hover,
+header nav button:hover {
   color: #a3bffa;
 }
 
 main {
   flex: 1;
   padding: 1rem;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-@media (min-width: 768px) {
-  main {
-    grid-template-columns: 1fr 2fr;
-  }
-}
-
-#teams {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-height: 70vh;
-  overflow-y: auto;
-  transition: transform 0.3s ease;
-}
-
-#teams:hover {
-  transform: translateY(-5px);
-}
-
-#teams h2 {
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-  color: #1e3a8a;
-}
-
-#teams ul {
-  list-style: none;
-}
-
-#teams li {
-  padding: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-#teams li:hover {
-  background-color: #e0e7ff;
-  border-radius: 4px;
-  transform: scale(1.02);
+  display: flex;
+  justify-content: center;
 }
 
 #game {
-  background: linear-gradient(135deg, #ffffff, #f0f4ff);
+  background: linear-gradient(135deg, var(--game-bg-start), var(--game-bg-end));
   border-radius: 8px;
   padding: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow-color);
   position: relative;
+  width: 100%;
+  max-width: 800px;
 }
 
 #silhouette {
@@ -106,7 +97,7 @@ main {
   max-width: 300px;
   margin: 0 auto 1rem;
   display: block;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 4px 8px var(--shadow-color));
   transition: transform 0.3s ease;
 }
 
@@ -118,29 +109,31 @@ main {
   width: 100%;
   padding: 0.5rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin-bottom: 0.5rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: var(--game-bg-start);
+  color: var(--text-color);
 }
 
 #guessInput:focus {
-  border-color: #1e3a8a;
-  box-shadow: 0 0 5px rgba(30, 58, 138, 0.3);
+  border-color: #a3bffa;
+  box-shadow: 0 0 5px rgba(163, 191, 250, 0.3);
   outline: none;
 }
 
 #autocomplete {
   position: absolute;
-  background: white;
-  border: 1px solid #ccc;
+  background: var(--game-bg-start);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   width: 100%;
   max-width: 100%;
   max-height: 150px;
   overflow-y: auto;
   z-index: 10;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px var(--shadow-color);
   display: none;
 }
 
@@ -148,17 +141,18 @@ main {
   padding: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  color: var(--text-color);
 }
 
 #autocomplete div:hover {
-  background-color: #e0e7ff;
+  background-color: var(--hover-bg);
 }
 
 #submitGuess {
   width: 100%;
   padding: 0.5rem;
-  background-color: #1e3a8a;
-  color: white;
+  background-color: #2b6cb0;
+  color: var(--text-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -167,7 +161,7 @@ main {
 }
 
 #submitGuess:hover {
-  background-color: #1e40af;
+  background-color: #3b82f6;
   transform: translateY(-2px);
 }
 
@@ -185,18 +179,41 @@ main {
 #guessTable td {
   padding: 0.5rem;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.5s ease;
+  color: var(--text-color);
 }
 
 #guessTable th {
-  background-color: #f4f4f4;
+  background-color: var(--table-header-bg);
   font-size: 0.9rem;
-  color: #1e3a8a;
 }
 
 #guessTable td {
   font-size: 0.9rem;
+}
+
+#leaderboard {
+  margin-top: 1rem;
+  background: var(--game-bg-start);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+#leaderboard h2 {
+  font-size: 1.2rem;
+  color: #a3bffa;
+  margin-bottom: 0.5rem;
+}
+
+#leaderboard ul {
+  list-style: none;
+}
+
+#leaderboard li {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modal {
@@ -213,20 +230,21 @@ main {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: var(--game-bg-start);
   padding: 1.5rem;
   border-radius: 8px;
   text-align: center;
   max-width: 90%;
   width: 300px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px var(--shadow-color);
   animation: slideIn 0.3s ease-out;
+  color: var(--text-color);
 }
 
 .modal-content button {
   padding: 0.5rem 1rem;
-  background-color: #1e3a8a;
-  color: white;
+  background-color: #2b6cb0;
+  color: var(--text-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -234,7 +252,7 @@ main {
 }
 
 .modal-content button:hover {
-  background-color: #1e40af;
+  background-color: #3b82f6;
 }
 
 @media (max-width: 767px) {
@@ -242,7 +260,6 @@ main {
     font-size: 1.2rem;
   }
 
-  #teams,
   #game {
     padding: 0.75rem;
   }
@@ -263,16 +280,16 @@ main {
 }
 
 footer {
-  background-color: #1e3a8a;
-  color: white;
+  background-color: var(--header-bg);
+  color: var(--text-color);
   text-align: center;
   padding: 0.5rem;
   margin-top: auto;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 -2px 8px var(--shadow-color);
 }
 
 footer a {
-  color: white;
+  color: var(--text-color);
   text-decoration: none;
 }
 
@@ -280,7 +297,6 @@ footer a:hover {
   color: #a3bffa;
 }
 
-/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -297,7 +313,6 @@ footer a:hover {
   100% { transform: scale(1); }
 }
 
-/* Confetti (for win animation) */
 .confetti {
   position: fixed;
   width: 10px;
