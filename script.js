@@ -1,5 +1,3 @@
-// [Existing teamMapping and fetchFPLData remain unchanged]
-
 const teamMapping = {
   1: "Arsenal",
   2: "Aston Villa",
@@ -22,35 +20,31 @@ const teamMapping = {
   19: "West Ham",
   20: "Wolves"
 };
+
 let players = [];
 let mysteryPlayer = null;
 let guesses = 0;
 let guessHistory = [];
 let user = null;
 const maxGuesses = 8;
+let timerInterval = null;
+let timeLeft = 120; // 2 minutes in seconds
 
 async function fetchFPLData() {
   const spinner = document.getElementById('loadingSpinner');
   spinner.style.display = 'block';
   try {
-    console.log('Attempting to fetch data from: ./fpl-data-raw.json');
     const response = await fetch('./fpl-data-raw.json');
-    console.log('Fetch response:', response);
-
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-
     const data = await response.json();
-    console.log('Fetched data successfully:', data);
-
     if (!data.elements) {
       throw new Error("Invalid JSON structure: 'elements' missing.");
     }
 
     const currentDate = new Date('2025-03-18');
-
-    const players = data.elements
+    players = data.elements
       .filter(player => player.element_type >= 1 && player.element_type <= 4)
       .map(player => {
         let age = null;
@@ -66,16 +60,17 @@ async function fetchFPLData() {
         return {
           name: `${player.first_name} ${player.second_name}`,
           team: teamMapping[player.team] || `Team ${player.team}`,
+          teamId: player.team,
           position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
           age: age,
           appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
           goals: player.goals_scored,
           assists: player.assists,
-          code: player.code
+          code: player.code,
+          funFact: getFunFact(player)
         };
       });
 
-    console.log('Processed players:', players);
     spinner.style.display = 'none';
     return { players };
   } catch (error) {
@@ -84,6 +79,17 @@ async function fetchFPLData() {
     spinner.style.display = 'none';
     return { players: [] };
   }
+}
+
+function getFunFact(player) {
+  const facts = [
+    `Once scored a hat-trick in a single Premier League match!`,
+    `Is known for their incredible work rate on the pitch.`,
+    `Has represented their national team in a major tournament.`,
+    `Started their career in a lower division before making it to the Premier League.`,
+    `Is a fan favorite for their leadership qualities.`
+  ];
+  return facts[Math.floor(Math.random() * facts.length)];
 }
 
 function getDailyPlayer(players) {
@@ -171,6 +177,15 @@ function setupSilhouette() {
       toggleButton.textContent = isShown ? 'Hide Silhouette' : 'Show Silhouette';
     }
   };
+
+  const newPlayerBtn = document.getElementById('newPlayerBtn');
+  newPlayerBtn.onclick = randomizePlayer;
+
+  const getHintBtn = document.getElementById('getHintBtn');
+  getHintBtn.onclick = getHint;
+
+  const customPlayerBtn = document.getElementById('customPlayerBtn');
+  customPlayerBtn.onclick = setupCustomPlayer;
 }
 
 function revealImage() {
@@ -178,6 +193,116 @@ function revealImage() {
   silhouette.classList.remove('shown');
   silhouette.classList.add('revealed');
   document.getElementById('toggleSilhouette').disabled = true;
+}
+
+function randomizePlayer() {
+  guesses = 0;
+  guessHistory = [];
+  updateGuessCounter();
+  document.querySelector('#guessTable tbody').innerHTML = '';
+  document.getElementById('playerInput').disabled = false;
+  document.querySelector('button[onclick="submitGuess()"]').disabled = false;
+
+  mysteryPlayer = getDailyPlayer(players);
+
+  const silhouette = document.getElementById('silhouette');
+  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${mysteryPlayer.code}.png`;
+  silhouette.classList.remove('shown', 'revealed');
+  document.getElementById('toggleSilhouette').textContent = 'Show Silhouette';
+  document.getElementById('toggleSilhouette').disabled = false;
+
+  document.getElementById('modal').style.display = 'none';
+
+  resetTimer();
+}
+
+function getHint() {
+  if (guesses >= maxGuesses) return;
+
+  const attributes = ['team', 'position'];
+  const revealed = guessHistory.map(g => Object.keys(g)).flat();
+  const available = attributes.filter(attr => !revealed.includes(attr));
+  if (available.length === 0) {
+    alert('No more hints available!');
+    return;
+  }
+
+  const hintAttr = available[Math.floor(Math.random() * available.length)];
+  guesses++;
+  updateGuessCounter();
+
+  const tbody = document.querySelector('#guessTable tbody');
+  const row = document.createElement('tr');
+  row.style.animationDelay = `${guesses * 0.1}s`;
+
+  const fields = ['name', 'team', 'position', 'age', 'appearances', 'goals', 'assists'];
+  fields.forEach(field => {
+    const cell = document.createElement('td');
+    if (field === hintAttr) {
+      if (field === 'team') {
+        const img = document.createElement('img');
+        img.src = `https://resources.premierleague.com/premierleague/badges/50/t${mysteryPlayer.teamId}.png`;
+        img.alt = mysteryPlayer.team;
+        img.classList.add('team-logo');
+        cell.appendChild(img);
+      } else {
+        cell.textContent = mysteryPlayer[field];
+      }
+      cell.classList.add('yellow');
+    } else if (field === 'name') {
+      cell.textContent = 'Hint';
+      cell.classList.add('gray');
+    } else {
+      cell.textContent = '-';
+      cell.classList.add('gray');
+    }
+    row.appendChild(cell);
+  });
+  tbody.appendChild(row);
+
+  if (guesses === maxGuesses) {
+    if (user) {
+      user.streak = 0;
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+    showModal(`Game over! It was ${mysteryPlayer.name}.`, true);
+    document.getElementById('playerInput').disabled = true;
+    document.querySelector('button[onclick="submitGuess()"]').disabled = true;
+    revealImage();
+    updateStats(false);
+  }
+}
+
+function setupCustomPlayer() {
+  const playerName = prompt('Enter the name of the player for a custom challenge:');
+  if (!playerName) return;
+
+  const selectedPlayer = players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+  if (!selectedPlayer) {
+    alert('Player not found. Please try again.');
+    return;
+  }
+
+  guesses = 0;
+  guessHistory = [];
+  updateGuessCounter();
+  document.querySelector('#guessTable tbody').innerHTML = '';
+  document.getElementById('playerInput').disabled = false;
+  document.querySelector('button[onclick="submitGuess()"]').disabled = false;
+
+  mysteryPlayer = selectedPlayer;
+
+  const silhouette = document.getElementById('silhouette');
+  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${mysteryPlayer.code}.png`;
+  silhouette.classList.remove('shown', 'revealed');
+  document.getElementById('toggleSilhouette').textContent = 'Show Silhouette';
+  document.getElementById('toggleSilhouette').disabled = false;
+
+  document.getElementById('modal').style.display = 'none';
+
+  const customLink = `${window.location.origin}${window.location.pathname}?player=${encodeURIComponent(mysteryPlayer.name)}`;
+  navigator.clipboard.writeText(customLink);
+  alert(`Custom challenge link copied to clipboard: ${customLink}`);
 }
 
 function setupDailyTip() {
@@ -213,17 +338,110 @@ function setupDailyTip() {
 function setupMobileMenu() {
   const menuToggle = document.getElementById('menuToggle');
   const topNav = document.querySelector('.top-nav');
-  const footer = document.querySelector('footer');
 
   menuToggle.addEventListener('click', () => {
     topNav.classList.toggle('active');
-    footer.classList.toggle('active');
   });
+}
+
+function setupDarkMode() {
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  const isDarkMode = localStorage.getItem('darkMode') === 'true';
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+    darkModeToggle.textContent = 'Light Mode';
+  }
+  darkModeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDark);
+    darkModeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  });
+}
+
+function setupSoundToggle() {
+  const soundToggle = document.getElementById('soundToggle');
+  const isSoundOn = localStorage.getItem('soundOn') !== 'false';
+  soundToggle.textContent = `Sound: ${isSoundOn ? 'On' : 'Off'}`;
+  soundToggle.addEventListener('click', () => {
+    const newState = localStorage.getItem('soundOn') !== 'false';
+    localStorage.setItem('soundOn', !newState);
+    soundToggle.textContent = `Sound: ${!newState ? 'On' : 'Off'}`;
+  });
+}
+
+function setupTimedMode() {
+  const timedModeToggle = document.getElementById('timedModeToggle');
+  const isTimedMode = localStorage.getItem('timedMode') === 'true';
+  timedModeToggle.textContent = `Timed Mode: ${isTimedMode ? 'On' : 'Off'}`;
+  document.getElementById('timer').style.display = isTimedMode ? 'block' : 'none';
+
+  if (isTimedMode) {
+    startTimer();
+  }
+
+  timedModeToggle.addEventListener('click', () => {
+    const newState = localStorage.getItem('timedMode') !== 'true';
+    localStorage.setItem('timedMode', newState);
+    timedModeToggle.textContent = `Timed Mode: ${newState ? 'On' : 'Off'}`;
+    document.getElementById('timer').style.display = newState ? 'block' : 'none';
+    if (newState) {
+      startTimer();
+    } else {
+      clearInterval(timerInterval);
+      timeLeft = 120;
+      updateTimerDisplay();
+    }
+  });
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = 120;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if (guesses < maxGuesses) {
+        showModal(`Time's up! It was ${mysteryPlayer.name}.`, true);
+        document.getElementById('playerInput').disabled = true;
+        document.querySelector('button[onclick="submitGuess()"]').disabled = true;
+        revealImage();
+        updateStats(false);
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  document.getElementById('timeLeft').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
+
+function resetTimer() {
+  if (localStorage.getItem('timedMode') === 'true') {
+    startTimer();
+  }
+}
+
+function playSound(type) {
+  if (localStorage.getItem('soundOn') === 'false') return;
+  const sounds = {
+    guess: 'https://www.myinstants.com/media/sounds/click.mp3',
+    win: 'https://www.myinstants.com/media/sounds/success.mp3',
+    lose: 'https://www.myinstants.com/media/sounds/fail.mp3'
+  };
+  const audio = new Audio(sounds[type]);
+  audio.play().catch(err => console.log('Sound playback failed:', err));
 }
 
 function getShareText() {
   let text = `PL Riddle ${new Date().toLocaleDateString()} ${guesses}/${maxGuesses}\n\n`;
   guessHistory.forEach(guess => {
+    if (guess.name === 'Hint') return;
     const row = [
       guess.name === mysteryPlayer.name ? '🟩' : '⬜',
       guess.team === mysteryPlayer.team ? '🟩' : '⬜',
@@ -238,13 +456,78 @@ function getShareText() {
   return text;
 }
 
+async function shareImage() {
+  const table = document.getElementById('guessTable');
+  const canvas = await html2canvas(table);
+  canvas.toBlob(blob => {
+    const file = new File([blob], 'pl-riddle-result.png', { type: 'image/png' });
+    const filesArray = [file];
+    if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+      navigator.share({
+        files: filesArray,
+        title: `PL Riddle ${new Date().toLocaleDateString()}`,
+        text: getShareText()
+      });
+    } else {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'pl-riddle-result.png';
+      link.click();
+    }
+  });
+}
+
+function updateStats(won) {
+  const stats = JSON.parse(localStorage.getItem('gameStats')) || {
+    totalGames: 0,
+    wins: 0,
+    totalGuesses: 0,
+    longestStreak: 0,
+    currentStreak: 0,
+    guessDistribution: Array(8).fill(0),
+    achievements: []
+  };
+
+  stats.totalGames++;
+  if (won) {
+    stats.wins++;
+    stats.totalGuesses += guesses;
+    stats.currentStreak++;
+    stats.longestStreak = Math.max(stats.longestStreak, stats.currentStreak);
+    stats.guessDistribution[guesses - 1]++;
+
+    // Check for achievements
+    if (!stats.achievements.includes('firstWin') && stats.wins === 1) {
+      stats.achievements.push('firstWin');
+      alert('Achievement Unlocked: First Win!');
+    }
+    if (!stats.achievements.includes('streakMaster') && stats.currentStreak >= 5) {
+      stats.achievements.push('streakMaster');
+      alert('Achievement Unlocked: Streak Master!');
+    }
+    if (!stats.achievements.includes('quickGuess') && guesses <= 3) {
+      stats.achievements.push('quickGuess');
+      alert('Achievement Unlocked: Quick Guess!');
+    }
+  } else {
+    stats.currentStreak = 0;
+  }
+
+  localStorage.setItem('gameStats', JSON.stringify(stats));
+}
+
 async function init() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const customPlayerName = urlParams.get('player');
+
   const data = await fetchFPLData();
   players = data.players;
   if (players.length === 0) return;
 
   user = JSON.parse(localStorage.getItem('user')) || null;
-  if (user && user.username === 'admin') {
+  if (customPlayerName) {
+    mysteryPlayer = players.find(p => p.name.toLowerCase() === customPlayerName.toLowerCase()) || getDailyPlayer(players);
+  } else if (user && user.username === 'admin') {
     const manualPlayer = prompt('Enter player name or leave blank for random:');
     if (manualPlayer) {
       mysteryPlayer = players.find(p => p.name.toLowerCase() === manualPlayer.toLowerCase()) || getDailyPlayer(players);
@@ -259,6 +542,9 @@ async function init() {
   setupSilhouette();
   setupDailyTip();
   setupMobileMenu();
+  setupDarkMode();
+  setupSoundToggle();
+  setupTimedMode();
   updateAuthLink();
 }
 
@@ -270,17 +556,30 @@ function showModal(message, showShare = false) {
   const modal = document.getElementById('modal');
   const result = document.getElementById('result');
   const shareBtn = document.getElementById('shareBtn');
+  const tweetBtn = document.getElementById('tweetBtn');
   const closeGameBtn = document.getElementById('closeGameBtn');
+  const playerProfile = document.getElementById('playerProfile');
+
   result.textContent = message;
   shareBtn.style.display = showShare ? 'inline-block' : 'none';
+  tweetBtn.style.display = showShare ? 'inline-block' : 'none';
   closeGameBtn.style.display = showShare ? 'inline-block' : 'none';
+
+  if (showShare && mysteryPlayer) {
+    playerProfile.style.display = 'block';
+    playerProfile.innerHTML = `<strong>Player Profile:</strong><br>Fun Fact: ${mysteryPlayer.funFact}`;
+  } else {
+    playerProfile.style.display = 'none';
+  }
+
   modal.style.display = 'block';
   modal.classList.add('active');
+
   if (showShare) {
-    shareBtn.onclick = () => {
-      navigator.clipboard.writeText(getShareText());
-      shareBtn.textContent = 'Copied!';
-      setTimeout(() => shareBtn.textContent = 'Share', 2000);
+    shareBtn.onclick = shareImage;
+    tweetBtn.onclick = () => {
+      const tweetText = encodeURIComponent(getShareText());
+      window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
     };
     closeGameBtn.onclick = () => modal.style.display = 'none';
   }
@@ -288,6 +587,7 @@ function showModal(message, showShare = false) {
 }
 
 function submitGuess() {
+  playSound('guess');
   const input = document.getElementById('playerInput');
   const guessName = input.value.trim();
   const guess = players.find(p => p.name.toLowerCase() === guessName.toLowerCase());
@@ -311,19 +611,27 @@ function submitGuess() {
   const fields = ['name', 'team', 'position', 'age', 'appearances', 'goals', 'assists'];
   fields.forEach(field => {
     const cell = document.createElement('td');
-    let cellText = guess[field] !== undefined ? guess[field].toString() : 'N/A';
-    if (['age', 'appearances', 'goals', 'assists'].includes(field)) {
-      const diff = guess[field] - mysteryPlayer[field];
-      if (diff !== 0) {
-        const arrow = document.createElement('span');
-        arrow.classList.add(diff < 0 ? 'arrow-up' : 'arrow-down');
-        cell.appendChild(document.createTextNode(cellText + ' '));
-        cell.appendChild(arrow);
+    if (field === 'team') {
+      const img = document.createElement('img');
+      img.src = `https://resources.premierleague.com/premierleague/badges/50/t${guess.teamId}.png`;
+      img.alt = guess.team;
+      img.classList.add('team-logo');
+      cell.appendChild(img);
+    } else {
+      let cellText = guess[field] !== undefined ? guess[field].toString() : 'N/A';
+      if (['age', 'appearances', 'goals', 'assists'].includes(field)) {
+        const diff = guess[field] - mysteryPlayer[field];
+        if (diff !== 0) {
+          const arrow = document.createElement('span');
+          arrow.classList.add(diff < 0 ? 'arrow-up' : 'arrow-down');
+          cell.appendChild(document.createTextNode(cellText + ' '));
+          cell.appendChild(arrow);
+        } else {
+          cell.textContent = cellText;
+        }
       } else {
         cell.textContent = cellText;
       }
-    } else {
-      cell.textContent = cellText;
     }
 
     if (field === 'name') {
@@ -349,19 +657,25 @@ function submitGuess() {
       user.streak = (user.streak || 0) + 1;
       localStorage.setItem('user', JSON.stringify(user));
     }
+    playSound('win');
     showModal(`You got it in ${guesses} guesses!`, true);
     input.disabled = true;
-    document.querySelector('button').disabled = true;
+    document.querySelector('button[onclick="submitGuess()"]').disabled = true;
     revealImage();
+    updateStats(true);
+    clearInterval(timerInterval);
   } else if (guesses === maxGuesses) {
     if (user) {
       user.streak = 0;
       localStorage.setItem('user', JSON.stringify(user));
     }
+    playSound('lose');
     showModal(`Game over! It was ${mysteryPlayer.name}.`, true);
     input.disabled = true;
-    document.querySelector('button').disabled = true;
+    document.querySelector('button[onclick="submitGuess()"]').disabled = true;
     revealImage();
+    updateStats(false);
+    clearInterval(timerInterval);
   }
 }
 

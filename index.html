@@ -6,6 +6,7 @@
   <title>PL Riddle</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
   <header>
@@ -20,6 +21,9 @@
         <a href="stats.html" class="nav-link">Stats</a>
         <a href="how-to-play.html" class="nav-link">How to Play</a>
         <a href="login.html" class="nav-link" id="authLink">Login/Register</a>
+        <button id="darkModeToggle" class="nav-link">Dark Mode</button>
+        <button id="soundToggle" class="nav-link">Sound: On</button>
+        <button id="timedModeToggle" class="nav-link">Timed Mode: Off</button>
       </div>
     </nav>
   </header>
@@ -35,10 +39,14 @@
     <div class="game-info">
       <p>Guess the Premier League player in 8 tries. New player daily.</p>
       <div class="guess-counter">Guesses: <span id="guessCount">0/8</span></div>
+      <div id="timer" style="display: none;">Time Left: <span id="timeLeft">2:00</span></div>
     </div>
     <div class="silhouette-area">
       <img id="silhouette" src="" alt="Player Silhouette" style="display: none;">
       <button id="toggleSilhouette">Show Silhouette</button>
+      <button id="newPlayerBtn">New Player</button>
+      <button id="getHintBtn">Get Hint</button>
+      <button id="customPlayerBtn">Custom Player</button>
     </div>
     <div class="input-area">
       <input type="text" id="playerInput" placeholder="Type a player name..." autocomplete="off">
@@ -64,15 +72,14 @@
     <div class="modal-content">
       <span id="modalClose" class="close">×</span>
       <p id="result"></p>
+      <div id="playerProfile" style="display: none; margin-top: 15px;"></div>
       <div class="modal-buttons">
         <button id="shareBtn" style="display: none;">Share</button>
+        <button id="tweetBtn" style="display: none;">Tweet</button>
         <button id="closeGameBtn" style="display: none;">Close</button>
       </div>
     </div>
   </div>
-  <footer>
-    <p>Designed by Arjun</p>
-  </footer>
   <script src="script.js"></script>
 </body>
 </html>
