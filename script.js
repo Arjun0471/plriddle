@@ -21,6 +21,29 @@ const teamMapping = {
   20: "Wolves"
 };
 
+const badgeMapping = {
+  1: "t3",   // Arsenal
+  2: "t7",   // Aston Villa
+  3: "t91",  // Bournemouth
+  4: "t94",  // Brentford
+  5: "t36",  // Brighton
+  6: "t8",   // Chelsea
+  7: "t31",  // Crystal Palace
+  8: "t11",  // Everton
+  9: "t54",  // Fulham
+  10: "t40", // Ipswich
+  11: "t13", // Leicester
+  12: "t14", // Liverpool
+  13: "t43", // Man City
+  14: "t1",  // Man Utd
+  15: "t4",  // Newcastle
+  16: "t17", // Nott'm Forest
+  17: "t20", // Southampton
+  18: "t6",  // Spurs
+  19: "t21", // West Ham
+  20: "t39"  // Wolves
+};
+
 let players = [];
 let mysteryPlayer = null;
 let guesses = 0;
@@ -61,6 +84,7 @@ async function fetchFPLData() {
           name: `${player.first_name} ${player.second_name}`,
           team: teamMapping[player.team] || `Team ${player.team}`,
           teamId: player.team,
+          badgeId: badgeMapping[player.team], // Use badge ID for logo
           position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
           age: age,
           appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
@@ -192,16 +216,9 @@ function getRandomPlayer(players) {
   do {
     randomIndex = Math.floor(Math.random() * players.length);
     newPlayer = players[randomIndex];
-  } while (newPlayer === lastPlayer && players.length > 1); // Avoid immediate repeats if possible
+  } while (newPlayer === lastPlayer && players.length > 1);
   lastPlayer = newPlayer;
   return newPlayer;
-}
-
-function getDailyPlayer(players) {
-  const today = new Date().toDateString();
-  const seed = today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const index = seed % players.length;
-  return players[index];
 }
 
 function randomizePlayer() {
@@ -229,11 +246,22 @@ function randomizePlayer() {
 function getHint() {
   if (guesses >= maxGuesses) return;
 
-  const attributes = ['team', 'position'];
-  const revealed = guessHistory.map(g => Object.keys(g)).flat();
-  const available = attributes.filter(attr => !revealed.includes(attr));
+  const attributes = ['team', 'position', 'age', 'appearances', 'goals', 'assists'];
+  
+  const guessedAttributes = guessHistory.map(g => {
+    const attrs = [];
+    if (g.team === mysteryPlayer.team) attrs.push('team');
+    if (g.position === mysteryPlayer.position) attrs.push('position');
+    if (g.age === mysteryPlayer.age) attrs.push('age');
+    if (g.appearances === mysteryPlayer.appearances) attrs.push('appearances');
+    if (g.goals === mysteryPlayer.goals) attrs.push('goals');
+    if (g.assists === mysteryPlayer.assists) attrs.push('assists');
+    return attrs;
+  }).flat();
+  
+  const available = attributes.filter(attr => !guessedAttributes.includes(attr));
   if (available.length === 0) {
-    alert('No more hints available!');
+    alert('No new hints available! All key attributes have been matched.');
     return;
   }
 
@@ -246,17 +274,36 @@ function getHint() {
   row.style.animationDelay = `${guesses * 0.1}s`;
 
   const fields = ['name', 'team', 'position', 'age', 'appearances', 'goals', 'assists'];
+  let hintText = '';
+
   fields.forEach(field => {
     const cell = document.createElement('td');
     if (field === hintAttr) {
       if (field === 'team') {
         const img = document.createElement('img');
-        img.src = `https://resources.premierleague.com/premierleague/badges/50/t${mysteryPlayer.teamId}.png`;
+        img.src = `https://resources.premierleague.com/premierleague/badges/50/${mysteryPlayer.badgeId}.png`;
         img.alt = mysteryPlayer.team;
         img.classList.add('team-logo');
         cell.appendChild(img);
+        hintText = `The player is from ${mysteryPlayer.team}.`;
+      } else if (field === 'position') {
+        cell.textContent = mysteryPlayer.position;
+        hintText = `The player is a ${mysteryPlayer.position}.`;
       } else {
-        cell.textContent = mysteryPlayer[field];
+        const value = mysteryPlayer[field];
+        const direction = Math.random() < 0.5 ? 'higher' : 'lower';
+        let hintValue;
+        if (field === 'age') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 5) + 1) : value + (Math.floor(Math.random() * 5) + 1);
+          cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+        } else if (field === 'appearances') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 5) + 1) : value + (Math.floor(Math.random() * 5) + 1);
+          cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+        } else if (field === 'goals' || field === 'assists') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 2) + 1) : value + (Math.floor(Math.random() * 2) + 1);
+          cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+        }
+        hintText = `The player's ${field} is ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
       }
       cell.classList.add('yellow');
     } else if (field === 'name') {
@@ -269,6 +316,8 @@ function getHint() {
     row.appendChild(cell);
   });
   tbody.appendChild(row);
+
+  alert(hintText);
 
   if (guesses === maxGuesses) {
     if (user) {
@@ -359,13 +408,17 @@ function setupSoundToggle() {
   const soundToggle = document.getElementById('soundToggle');
   const soundIcon = document.getElementById('soundIcon');
   const isSoundOn = localStorage.getItem('soundOn') !== 'false';
-  soundIcon.src = isSoundOn ? 'assets/images/sound-on.png' : 'assets/images/sound-off.png';
+  soundIcon.src = isSoundOn ? 'assets/images/sound-on.svg' : 'assets/images/sound-off.svg';
   soundIcon.alt = isSoundOn ? 'Sound On' : 'Sound Off';
+  soundIcon.classList.remove('sound-on', 'sound-off');
+  soundIcon.classList.add(isSoundOn ? 'sound-on' : 'sound-off');
   soundToggle.addEventListener('click', () => {
     const newState = localStorage.getItem('soundOn') !== 'false';
     localStorage.setItem('soundOn', !newState);
-    soundIcon.src = !newState ? 'assets/images/sound-on.png' : 'assets/images/sound-off.png';
+    soundIcon.src = !newState ? 'assets/images/sound-on.svg' : 'assets/images/sound-off.svg';
     soundIcon.alt = !newState ? 'Sound On' : 'Sound Off';
+    soundIcon.classList.remove('sound-on', 'sound-off');
+    soundIcon.classList.add(!newState ? 'sound-on' : 'sound-off');
   });
 }
 
@@ -498,7 +551,6 @@ function updateStats(won) {
     stats.longestStreak = Math.max(stats.longestStreak, stats.currentStreak);
     stats.guessDistribution[guesses - 1]++;
 
-    // Check for achievements
     if (!stats.achievements.includes('firstWin') && stats.wins === 1) {
       stats.achievements.push('firstWin');
       alert('Achievement Unlocked: First Win!');
@@ -607,7 +659,7 @@ function submitGuess() {
     const cell = document.createElement('td');
     if (field === 'team') {
       const img = document.createElement('img');
-      img.src = `https://resources.premierleague.com/premierleague/badges/50/t${guess.teamId}.png`;
+      img.src = `https://resources.premierleague.com/premierleague/badges/50/${guess.badgeId}.png`;
       img.alt = guess.team;
       img.classList.add('team-logo');
       cell.appendChild(img);
@@ -687,24 +739,6 @@ function updateAuthLink() {
     authLink.textContent = 'Login/Register';
     authLink.href = 'login.html';
   }
-}
-
-function setupSoundToggle() {
-  const soundToggle = document.getElementById('soundToggle');
-  const soundIcon = document.getElementById('soundIcon');
-  const isSoundOn = localStorage.getItem('soundOn') !== 'false';
-  soundIcon.src = isSoundOn ? 'assets/images/sound-on.svg' : 'assets/images/sound-off.svg';
-  soundIcon.alt = isSoundOn ? 'Sound On' : 'Sound Off';
-  soundIcon.classList.remove('sound-on', 'sound-off');
-  soundIcon.classList.add(isSoundOn ? 'sound-on' : 'sound-off');
-  soundToggle.addEventListener('click', () => {
-    const newState = localStorage.getItem('soundOn') !== 'false';
-    localStorage.setItem('soundOn', !newState);
-    soundIcon.src = !newState ? 'assets/images/sound-on.svg' : 'assets/images/sound-off.svg';
-    soundIcon.alt = !newState ? 'Sound On' : 'Sound Off';
-    soundIcon.classList.remove('sound-on', 'sound-off');
-    soundIcon.classList.add(!newState ? 'sound-on' : 'sound-off');
-  });
 }
 
 window.onload = init;
