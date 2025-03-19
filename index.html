@@ -5,73 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PL Riddle</title>
   <link rel="stylesheet" href="styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <header>
-    <nav class="top-nav">
-      <div class="nav-left">
-        <img src="https://www.premierleague.com/resources/ver/i/favicon/favicon.ico" alt="PL Logo" class="header-logo">
-        <h1>PL Riddle</h1>
-      </div>
-      <div class="nav-right">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="stats.html" class="nav-link">Stats</a>
-        <a href="how-to-play.html" class="nav-link">How to Play</a>
-        <a href="login.html" class="nav-link" id="authLink">Login/Register</a>
-      </div>
+    <h1>PL Riddle</h1>
+    <nav>
+      <a href="#" id="loginLink">Login</a>
+      <a href="#" id="logoutLink" style="display: none;">Logout</a>
     </nav>
   </header>
-  <div class="sidebar left-sidebar" id="teamSidebar" style="display: none;">
-    <h3>Teams <button id="toggleTeams" class="toggle-btn">Hide</button></h3>
-    <ul id="teamList"></ul>
-  </div>
-  <div class="sidebar right-sidebar">
-    <h3>Daily Tip</h3>
-    <p id="dailyTip"></p>
-  </div>
+
   <main>
-    <div class="game-info">
-      <p>Guess the Premier League player in 8 tries. New player daily. <button id="showTeamsBtn" class="small-btn">Show Teams</button></p>
-      <div class="guess-counter">Guesses: <span id="guessCount">0/8</span></div>
-    </div>
-    <div class="silhouette-area">
-      <img id="silhouette" src="" alt="Player Silhouette" style="display: none;">
-      <button id="toggleSilhouette">Show Silhouette</button>
-    </div>
-    <div class="input-area">
-      <input type="text" id="playerInput" placeholder="Type a player name..." autocomplete="off">
-      <ul id="suggestions" class="suggestions"></ul>
-      <button onclick="submitGuess()">Guess</button>
-    </div>
-    <table id="guessTable">
-      <thead>
-        <tr>
-          <th>Player</th>
-          <th>Team</th>
-          <th>Pos</th>
-          <th>Age</th>
-          <th>Apps</th>
-          <th>Goals</th>
-          <th>Assists</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <aside id="teams">
+      <h2>Teams</h2>
+      <ul></ul>
+    </aside>
+
+    <section id="game">
+      <img src="silhouette.png" alt="Player Silhouette" id="silhouette">
+      <input type="text" id="guessInput" placeholder="Enter player name..." autocomplete="off">
+      <button id="submitGuess">Submit Guess</button>
+      <table id="guessTable">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Team</th>
+            <th>Position</th>
+            <th>Age</th>
+            <th>Appearances</th>
+            <th>Goals</th>
+            <th>Assists</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </main>
+
   <div id="modal" class="modal">
     <div class="modal-content">
-      <span id="modalClose" class="close">×</span>
-      <p id="result"></p>
-      <div class="modal-buttons">
-        <button id="shareBtn" style="display: none;">Share</button>
-        <button id="closeGameBtn" style="display: none;">Close</button>
-      </div>
+      <p id="modalMessage"></p>
+      <button id="closeModal">Close</button>
     </div>
   </div>
+
   <footer>
-    <p>Designed by Arjun</p>
+    <p>Made with ❤️ by <a href="https://github.com/arjun0471" target="_blank">arjun0471</a></p>
   </footer>
+
   <script src="script.js"></script>
 </body>
 </html>
