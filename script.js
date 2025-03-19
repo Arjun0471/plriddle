@@ -12,7 +12,7 @@ const teamMapping = {
   11: "Leicester",
   12: "Liverpool",
   13: "Man City",
-  14: "Man Utd",
+ 14: "Man Utd",
   15: "Newcastle",
   16: "Nott'm Forest",
   17: "Southampton",
@@ -28,6 +28,8 @@ let user = null;
 const maxGuesses = 8;
 
 async function fetchFPLData() {
+  const spinner = document.getElementById('loadingSpinner');
+  spinner.style.display = 'block';
   try {
     console.log('Attempting to fetch data from: ./fpl-data-raw.json');
     const response = await fetch('./fpl-data-raw.json');
@@ -72,10 +74,12 @@ async function fetchFPLData() {
       });
 
     console.log('Processed players:', players);
+    spinner.style.display = 'none';
     return { players };
   } catch (error) {
     console.error('Error loading FPL data:', error);
     showModal('Failed to load player data. Check console or refresh.');
+    spinner.style.display = 'none';
     return { players: [] };
   }
 }
@@ -185,10 +189,26 @@ function setupDailyTip() {
     "Players from top teams often have more assists.",
     "Age can hint at experience—older players may have more apps!",
     "Newly promoted teams might have players with fewer PL appearances.",
-    "Some players have zero goals—don’t assume everyone scores!"
+    "Some players have zero goals—don’t assume everyone scores!",
+    "Veteran players might have high appearances but fewer goals.",
+    "Assists can be a good clue for playmakers.",
+    "Young strikers might have fewer appearances but high goals.",
+    "Check the team—some clubs have distinct player profiles!",
+    "Older defenders often have more appearances."
   ];
   const tip = tips[Math.floor(Math.random() * tips.length)];
   document.getElementById('dailyTip').textContent = tip;
+}
+
+function setupMobileMenu() {
+  const menuToggle = document.getElementById('menuToggle');
+  const topNav = document.querySelector('.top-nav');
+  const footer = document.querySelector('footer');
+
+  menuToggle.addEventListener('click', () => {
+    topNav.classList.toggle('active');
+    footer.classList.toggle('active');
+  });
 }
 
 function getShareText() {
@@ -228,6 +248,7 @@ async function init() {
   setupAutocomplete();
   setupSilhouette();
   setupDailyTip();
+  setupMobileMenu();
   updateAuthLink();
 }
 
@@ -260,27 +281,34 @@ function submitGuess() {
   const input = document.getElementById('playerInput');
   const guessName = input.value.trim();
   const guess = players.find(p => p.name.toLowerCase() === guessName.toLowerCase());
-  input.value = '';
-  document.getElementById('suggestions').style.display = 'none';
 
-  if (!guess || guesses >= maxGuesses) return;
+  // Validate the guess
+  if (!guess) {
+    alert('Invalid player name. Please try again.');
+    input.value = '';
+    document.getElementById('suggestions').style.display = 'none';
+    return;
+  }
+
+  if (guesses >= maxGuesses) return;
 
   guesses++;
   guessHistory.push(guess);
   updateGuessCounter();
   const tbody = document.querySelector('#guessTable tbody');
   const row = document.createElement('tr');
+  row.style.animationDelay = `${guesses * 0.1}s`; // Stagger animation
 
   const fields = ['name', 'team', 'position', 'age', 'appearances', 'goals', 'assists'];
   fields.forEach(field => {
     const cell = document.createElement('td');
-    let cellText = guess[field];
+    let cellText = guess[field] !== undefined ? guess[field].toString() : 'N/A'; // Handle undefined values
     if (['age', 'appearances', 'goals', 'assists'].includes(field)) {
       const diff = guess[field] - mysteryPlayer[field];
       if (diff !== 0) {
         const arrow = document.createElement('span');
         arrow.classList.add(diff < 0 ? 'arrow-up' : 'arrow-down');
-        cell.appendChild(document.createTextNode(guess[field] + ' '));
+        cell.appendChild(document.createTextNode(cellText + ' '));
         cell.appendChild(arrow);
       } else {
         cell.textContent = cellText;
@@ -288,6 +316,8 @@ function submitGuess() {
     } else {
       cell.textContent = cellText;
     }
+
+    // Apply color coding
     if (field === 'name') {
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
     } else if (['age', 'appearances'].includes(field)) {
@@ -303,6 +333,11 @@ function submitGuess() {
   });
   tbody.appendChild(row);
 
+  // Clear input and hide suggestions
+  input.value = '';
+  document.getElementById('suggestions').style.display = 'none';
+
+  // Check win or loss conditions
   if (guess.name === mysteryPlayer.name) {
     if (user) {
       user.streak = (user.streak || 0) + 1;

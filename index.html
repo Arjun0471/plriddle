@@ -9,6 +9,7 @@
 </head>
 <body>
   <header>
+    <button class="menu-toggle" id="menuToggle">☰</button>
     <nav class="top-nav">
       <div class="nav-left">
         <img src="https://www.premierleague.com/resources/ver/i/favicon/favicon.ico" alt="PL Logo" class="header-logo">
@@ -27,6 +28,10 @@
     <p id="dailyTip"></p>
   </div>
   <main>
+    <div id="loadingSpinner" style="display: none; text-align: center; margin: 20px 0;">
+      <div class="spinner"></div>
+      <p>Loading player data...</p>
+    </div>
     <div class="game-info">
       <p>Guess the Premier League player in 8 tries. New player daily.</p>
       <div class="guess-counter">Guesses: <span id="guessCount">0/8</span></div>
