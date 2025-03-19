@@ -184,10 +184,24 @@ function revealImage() {
   document.getElementById('toggleSilhouette').disabled = true;
 }
 
-// Add this new function to select a truly random player
+let lastPlayer = null;
+
 function getRandomPlayer(players) {
-  const randomIndex = Math.floor(Math.random() * players.length);
-  return players[randomIndex];
+  let randomIndex;
+  let newPlayer;
+  do {
+    randomIndex = Math.floor(Math.random() * players.length);
+    newPlayer = players[randomIndex];
+  } while (newPlayer === lastPlayer && players.length > 1); // Avoid immediate repeats if possible
+  lastPlayer = newPlayer;
+  return newPlayer;
+}
+
+function getDailyPlayer(players) {
+  const today = new Date().toDateString();
+  const seed = today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const index = seed % players.length;
+  return players[index];
 }
 
 function randomizePlayer() {
@@ -199,7 +213,6 @@ function randomizePlayer() {
   document.getElementById('playerInput').value = '';
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
 
-  // Use getRandomPlayer instead of getDailyPlayer for truly random selection
   mysteryPlayer = getRandomPlayer(players);
 
   const silhouette = document.getElementById('silhouette');
