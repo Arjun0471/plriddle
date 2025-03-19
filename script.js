@@ -1,3 +1,25 @@
+const teamMapping = {
+  1: "Arsenal",
+  2: "Aston Villa",
+  3: "Bournemouth",
+  4: "Brentford",
+  5: "Brighton",
+  6: "Chelsea",
+  7: "Crystal Palace",
+  8: "Everton",
+  9: "Fulham",
+  10: "Ipswich",
+  11: "Leicester",
+  12: "Liverpool",
+  13: "Man City",
+  14: "Man Utd",
+  15: "Newcastle",
+  16: "Nott'm Forest",
+  17: "Southampton",
+  18: "Spurs",
+  19: "West Ham",
+  20: "Wolves"
+};
 let players = [];
 let mysteryPlayer = null;
 let guesses = 0;
@@ -22,18 +44,32 @@ async function fetchFPLData() {
       throw new Error("Invalid JSON structure: 'elements' missing.");
     }
 
+    const currentDate = new Date('2025-03-18');
+
     const players = data.elements
       .filter(player => player.element_type >= 1 && player.element_type <= 4)
-      .map(player => ({
-        name: `${player.first_name} ${player.second_name}`,
-        team: `Team ${player.team}`, // Placeholder since 'teams' data is missing
-        position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
-        age: Math.floor(Math.random() * 15) + 20,
-        appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
-        goals: player.goals_scored,
-        assists: player.assists,
-        code: player.code
-      }));
+      .map(player => {
+        let age = null;
+        if (player.birth_date) {
+          const birthDate = new Date(player.birth_date);
+          const ageDiffMs = currentDate - birthDate;
+          const ageDate = new Date(ageDiffMs);
+          age = Math.abs(ageDate.getUTCFullYear() - 1970);
+        } else {
+          age = Math.floor(Math.random() * 15) + 20;
+        }
+
+        return {
+          name: `${player.first_name} ${player.second_name}`,
+          team: teamMapping[player.team] || `Team ${player.team}`, // Use mapping or fallback
+          position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
+          age: age,
+          appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
+          goals: player.goals_scored,
+          assists: player.assists,
+          code: player.code
+        };
+      });
 
     console.log('Processed players:', players);
     return { players };
@@ -209,7 +245,12 @@ async function init() {
 
   setupAutocomplete();
   setupSilhouette();
-  setupTeams(data.teams);
+  // Use teamMapping to create a teams array for the sidebar
+  const teams = Object.values(teamMapping).map((name, index) => ({
+    short: name,
+    name: name
+  }));
+  setupTeams(teams);
   setupDailyTip();
   updateAuthLink();
 }
