@@ -12,11 +12,15 @@
     <nav>
       <a href="#" id="loginLink">Login</a>
       <a href="#" id="logoutLink" style="display: none;">Logout</a>
-      <button id="darkModeToggle">Toggle Dark Mode</button>
     </nav>
   </header>
 
   <main>
+    <aside id="teams">
+      <h2>Teams</h2>
+      <ul></ul>
+    </aside>
+
     <section id="game">
       <img src="silhouette.png" alt="Player Silhouette" id="silhouette">
       <input type="text" id="guessInput" placeholder="Enter player name..." autocomplete="off">
@@ -35,10 +39,6 @@
         </thead>
         <tbody></tbody>
       </table>
-      <div id="leaderboard">
-        <h2>Leaderboard</h2>
-        <ul id="leaderboardList"></ul>
-      </div>
     </section>
   </main>
 
@@ -54,8 +54,5 @@
   </footer>
 
   <script src="script.js"></script>
-  <audio id="correctSound" src="correct.mp3"></audio>
-  <audio id="wrongSound" src="wrong.mp3"></audio>
-  <audio id="winSound" src="win.mp3"></audio>
 </body>
 </html>
