@@ -184,6 +184,12 @@ function revealImage() {
   document.getElementById('toggleSilhouette').disabled = true;
 }
 
+// Add this new function to select a truly random player
+function getRandomPlayer(players) {
+  const randomIndex = Math.floor(Math.random() * players.length);
+  return players[randomIndex];
+}
+
 function randomizePlayer() {
   guesses = 0;
   guessHistory = [];
@@ -193,7 +199,8 @@ function randomizePlayer() {
   document.getElementById('playerInput').value = '';
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
 
-  mysteryPlayer = getDailyPlayer(players);
+  // Use getRandomPlayer instead of getDailyPlayer for truly random selection
+  mysteryPlayer = getRandomPlayer(players);
 
   const silhouette = document.getElementById('silhouette');
   silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
