@@ -1,11 +1,3 @@
-const debounce = (func, delay) => {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(null, args), delay);
-  };
-};
-
 const teamMapping = {
   1: "Arsenal",
   2: "Aston Villa",
@@ -28,17 +20,14 @@ const teamMapping = {
   19: "West Ham",
   20: "Wolves"
 };
-
 let players = [];
 let mysteryPlayer = null;
+let guesses = 0;
+let guessHistory = [];
 let user = null;
+const maxGuesses = 8;
 
 async function fetchFPLData() {
-  const modal = document.getElementById('modal');
-  const modalMessage = document.getElementById('modalMessage');
-  modalMessage.textContent = 'Loading player data...';
-  modal.style.display = 'flex';
-
   try {
     console.log('Attempting to fetch data from: ./fpl-data-raw.json');
     const response = await fetch('./fpl-data-raw.json');
@@ -72,7 +61,7 @@ async function fetchFPLData() {
 
         return {
           name: `${player.first_name} ${player.second_name}`,
-          team: teamMapping[player.team] || `Team ${player.team}`,
+          team: teamMapping[player.team] || `Team ${player.team}`, // Use mapping or fallback
           position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
           age: age,
           appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
@@ -83,7 +72,6 @@ async function fetchFPLData() {
       });
 
     console.log('Processed players:', players);
-    modal.style.display = 'none';
     return { players };
   } catch (error) {
     console.error('Error loading FPL data:', error);
@@ -92,182 +80,150 @@ async function fetchFPLData() {
   }
 }
 
+
 function getDailyPlayer(players) {
-  const now = new Date();
-  const seed = now.getDate() + now.getMonth() + now.getFullYear();
+  const today = new Date().toDateString();
+  const seed = today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const index = seed % players.length;
   return players[index];
 }
 
 function setupAutocomplete() {
-  const input = document.getElementById('guessInput');
-  const autocomplete = document.createElement('div');
-  autocomplete.id = 'autocomplete';
-  input.parentNode.insertBefore(autocomplete, input.nextSibling);
+  const input = document.getElementById('playerInput');
+  const suggestions = document.getElementById('suggestions');
+  let selectedIndex = -1;
 
-  input.addEventListener('input', debounce(() => {
-    const value = input.value.toLowerCase();
-    const suggestions = players.filter(p => p.name.toLowerCase().includes(value)).slice(0, 5);
-    autocomplete.innerHTML = suggestions.map(p => `<div>${p.name} (${p.team})</div>`).join('');
-    autocomplete.style.display = suggestions.length ? 'block' : 'none';
-  }, 300));
+  input.addEventListener('input', () => {
+    const query = input.value.trim().toLowerCase();
+    suggestions.innerHTML = '';
+    selectedIndex = -1;
+    if (query.length < 2) {
+      suggestions.style.display = 'none';
+      return;
+    }
 
-  autocomplete.addEventListener('click', (e) => {
-    if (e.target.tagName === 'DIV') {
-      input.value = e.target.textContent.split(' (')[0];
-      autocomplete.style.display = 'none';
+    const matches = players
+      .filter(p => p.name.toLowerCase().includes(query))
+      .slice(0, 5);
+    if (matches.length > 0) {
+      matches.forEach((player, i) => {
+        const li = document.createElement('li');
+        li.textContent = player.name;
+        li.onclick = () => {
+          input.value = player.name;
+          suggestions.style.display = 'none';
+        };
+        suggestions.appendChild(li);
+      });
+      suggestions.style.display = 'block';
+    } else {
+      suggestions.style.display = 'none';
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const items = suggestions.querySelectorAll('li');
+    if (!items.length || suggestions.style.display === 'none') return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+      updateSelection(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedIndex = Math.max(selectedIndex - 1, -1);
+      updateSelection(items);
+    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+      e.preventDefault();
+      input.value = items[selectedIndex].textContent;
+      suggestions.style.display = 'none';
       submitGuess();
     }
   });
 
-  input.addEventListener('blur', () => {
-    setTimeout(() => (autocomplete.style.display = 'none'), 200);
+  input.addEventListener('blur', () => setTimeout(() => suggestions.style.display = 'none', 100));
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && selectedIndex < 0) submitGuess();
   });
 
-  input.addEventListener('touchend', (e) => {
-    if (e.target === input && !input.value) e.preventDefault();
-  });
-
-  document.getElementById('submitGuess').addEventListener('touchend', (e) => {
-    e.preventDefault();
-    submitGuess();
-  });
+  function updateSelection(items) {
+    items.forEach((item, i) => item.classList.toggle('selected', i === selectedIndex));
+    if (selectedIndex >= 0) input.value = items[selectedIndex].textContent;
+  }
 }
 
 function setupSilhouette() {
   const silhouette = document.getElementById('silhouette');
-  silhouette.src = `silhouette.png`;
+  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${mysteryPlayer.code}.png`;
+  silhouette.style.display = 'block';
+
+  const toggleButton = document.getElementById('toggleSilhouette');
+  let isShown = false;
+  toggleButton.onclick = () => {
+    if (guesses < maxGuesses && !silhouette.classList.contains('revealed')) {
+      isShown = !isShown;
+      silhouette.classList.toggle('shown', isShown);
+      toggleButton.textContent = isShown ? 'Hide Silhouette' : 'Show Silhouette';
+    }
+  };
+}
+
+function revealImage() {
+  const silhouette = document.getElementById('silhouette');
+  silhouette.classList.remove('shown');
+  silhouette.classList.add('revealed');
+  document.getElementById('toggleSilhouette').disabled = true;
 }
 
 function setupTeams(teams) {
-  const ul = document.getElementById('teams').querySelector('ul');
-  ul.innerHTML = teams.map(team => `<li>${team.name}</li>`).join('');
-  ul.addEventListener('click', (e) => {
-    if (e.target.tagName === 'LI') {
-      const team = e.target.textContent;
-      const filteredPlayers = players.filter(p => p.team === team);
-      if (filteredPlayers.length > 0) {
-        mysteryPlayer = filteredPlayers[Math.floor(Math.random() * filteredPlayers.length)];
-        document.getElementById('guessTable').querySelector('tbody').innerHTML = '';
-        document.getElementById('submitGuess').disabled = false;
-        e.target.style.backgroundColor = '#d4edda'; // Highlight selected team
-        setTimeout(() => (e.target.style.backgroundColor = ''), 1000);
-      }
-    }
+  const teamList = document.getElementById('teamList');
+  teams.forEach(team => {
+    const li = document.createElement('li');
+    li.textContent = team.short;
+    li.title = team.name;
+    teamList.appendChild(li);
   });
+
+  const toggleBtn = document.getElementById('toggleTeams');
+  const sidebar = document.getElementById('teamSidebar');
+  const showBtn = document.getElementById('showTeamsBtn');
+  toggleBtn.onclick = () => {
+    sidebar.classList.toggle('hidden');
+    toggleBtn.textContent = sidebar.classList.contains('hidden') ? 'Show' : 'Hide';
+  };
+  showBtn.onclick = () => {
+    sidebar.style.display = 'block';
+    sidebar.classList.remove('hidden');
+    toggleBtn.textContent = 'Hide';
+  };
 }
 
 function setupDailyTip() {
-  const tip = document.createElement('p');
-  tip.textContent = 'Tip: Guess based on team and stats!';
-  tip.style.textAlign = 'center';
-  tip.style.marginTop = '0.5rem';
-  tip.style.color = '#1e3a8a';
-  document.getElementById('game').appendChild(tip);
-}
-
-function updateAuthLink() {
-  const loginLink = document.getElementById('loginLink');
-  const logoutLink = document.getElementById('logoutLink');
-  if (user) {
-    loginLink.style.display = 'none';
-    logoutLink.style.display = 'inline';
-  } else {
-    loginLink.style.display = 'inline';
-    logoutLink.style.display = 'none';
-  }
-}
-
-function showModal(message) {
-  const modal = document.getElementById('modal');
-  const modalMessage = document.getElementById('modalMessage');
-  modalMessage.textContent = message;
-  modal.style.display = 'flex';
-  document.getElementById('closeModal').focus();
-  document.getElementById('closeModal').addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
-}
-
-function createConfetti() {
-  const colors = ['#ff0', '#f00', '#0f0', '#00f', '#ff69b4'];
-  for (let i = 0; i < 50; i++) {
-    const confetti = document.createElement('div');
-    confetti.className = 'confetti';
-    confetti.style.left = `${Math.random() * 100}vw`;
-    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-    confetti.style.animationDelay = `${Math.random() * 2}s`;
-    document.body.appendChild(confetti);
-  }
-}
-
-function updateGuessTable(player) {
-  const table = document.getElementById('guessTable').querySelector('tbody');
-  const row = table.insertRow();
-  row.style.opacity = '0';
-  row.style.transform = 'translateY(20px)';
-  setTimeout(() => {
-    row.style.transition = 'all 0.5s ease';
-    row.style.opacity = '1';
-    row.style.transform = 'translateY(0)';
-  }, 10);
-
-  const cells = [
-    player.name,
-    player.team,
-    player.position,
-    player.age,
-    player.appearances,
-    player.goals,
-    player.assists
+  const tips = [
+    "Check the silhouette for position hints!",
+    "Midfielders often have high assists.",
+    "Young players may have fewer appearances.",
+    "Goalkeepers rarely score goals."
   ];
+  const tip = tips[Math.floor(Math.random() * tips.length)];
+  document.getElementById('dailyTip').textContent = tip;
+}
 
-  cells.forEach((cell, index) => {
-    const td = row.insertCell();
-    td.textContent = cell;
-    const mysteryValue = [mysteryPlayer.name, mysteryPlayer.team, mysteryPlayer.position, mysteryPlayer.age, mysteryPlayer.appearances, mysteryPlayer.goals, mysteryPlayer.assists][index];
-    if (index === 0) {
-      td.style.backgroundColor = cell === mysteryValue ? '#d4edda' : '#f8d7da';
-    } else if (index === 3) {
-      td.style.backgroundColor = cell === mysteryValue ? '#d4edda' : (Math.abs(cell - mysteryValue) <= 5 ? '#fff3cd' : '#f8d7da');
-    } else {
-      td.style.backgroundColor = cell === mysteryValue ? '#d4edda' : '#f8d7da';
-    }
+function getShareText() {
+  let text = `PL Riddle ${new Date().toLocaleDateString()} ${guesses}/${maxGuesses}\n\n`;
+  guessHistory.forEach(guess => {
+    const row = [
+      guess.name === mysteryPlayer.name ? '🟩' : '⬜',
+      guess.team === mysteryPlayer.team ? '🟩' : '⬜',
+      guess.position === mysteryPlayer.position ? '🟩' : '⬜',
+      guess.age === mysteryPlayer.age ? '🟩' : Math.abs(guess.age - mysteryPlayer.age) <= 5 ? '🟨' : '⬜',
+      guess.appearances === mysteryPlayer.appearances ? '🟩' : Math.abs(guess.appearances - mysteryPlayer.appearances) <= 5 ? '🟨' : '⬜',
+      guess.goals === mysteryPlayer.goals ? '🟩' : Math.abs(guess.goals - mysteryPlayer.goals) <= 2 ? '🟨' : '⬜',
+      guess.assists === mysteryPlayer.assists ? '🟩' : Math.abs(guess.assists - mysteryPlayer.assists) <= 2 ? '🟨' : '⬜'
+    ];
+    text += row.join('') + '\n';
   });
-
-  if (table.rows.length >= 8) {
-    document.getElementById('submitGuess').disabled = true;
-    showModal(`Game Over! The player was ${mysteryPlayer.name}.`);
-  }
-}
-
-function checkWin() {
-  const table = document.getElementById('guessTable').querySelector('tbody');
-  const lastRow = table.rows[table.rows.length - 1];
-  const playerCell = lastRow.cells[0];
-  if (playerCell.textContent === mysteryPlayer.name) {
-    showModal(`Congratulations! You found ${mysteryPlayer.name} in ${table.rows.length} guesses!`);
-    document.getElementById('submitGuess').disabled = true;
-    lastRow.style.animation = 'celebrate 0.5s ease';
-    createConfetti();
-  }
-}
-
-function submitGuess() {
-  const input = document.getElementById('guessInput');
-  const guess = input.value.trim();
-  if (!guess) return;
-
-  const player = players.find(p => p.name.toLowerCase() === guess.toLowerCase());
-  if (!player) {
-    showModal('Player not found!');
-    return;
-  }
-
-  updateGuessTable(player);
-  input.value = '';
-  document.getElementById('autocomplete').style.display = 'none';
-  checkWin();
+  return text;
 }
 
 async function init() {
@@ -289,6 +245,7 @@ async function init() {
 
   setupAutocomplete();
   setupSilhouette();
+  // Use teamMapping to create a teams array for the sidebar
   const teams = Object.values(teamMapping).map((name, index) => ({
     short: name,
     name: name
@@ -298,4 +255,112 @@ async function init() {
   updateAuthLink();
 }
 
-init();
+function updateGuessCounter() {
+  document.getElementById('guessCount').textContent = `${guesses}/${maxGuesses}`;
+}
+
+function showModal(message, showShare = false) {
+  const modal = document.getElementById('modal');
+  const result = document.getElementById('result');
+  const shareBtn = document.getElementById('shareBtn');
+  const closeGameBtn = document.getElementById('closeGameBtn');
+  result.textContent = message;
+  shareBtn.style.display = showShare ? 'inline-block' : 'none';
+  closeGameBtn.style.display = showShare ? 'inline-block' : 'none';
+  modal.style.display = 'block';
+  if (showShare) {
+    shareBtn.onclick = () => {
+      navigator.clipboard.writeText(getShareText());
+      shareBtn.textContent = 'Copied!';
+      setTimeout(() => shareBtn.textContent = 'Share', 2000);
+    };
+    closeGameBtn.onclick = () => modal.style.display = 'none';
+  }
+  document.getElementById('modalClose').onclick = () => modal.style.display = 'none';
+}
+
+function submitGuess() {
+  const input = document.getElementById('playerInput');
+  const guessName = input.value.trim();
+  const guess = players.find(p => p.name.toLowerCase() === guessName.toLowerCase());
+  input.value = '';
+  document.getElementById('suggestions').style.display = 'none';
+
+  if (!guess || guesses >= maxGuesses) return;
+
+  guesses++;
+  guessHistory.push(guess);
+  updateGuessCounter();
+  const tbody = document.querySelector('#guessTable tbody');
+  const row = document.createElement('tr');
+
+  const fields = ['name', 'team', 'position', 'age', 'appearances', 'goals', 'assists'];
+  fields.forEach(field => {
+    const cell = document.createElement('td');
+    let cellText = guess[field];
+    if (['age', 'appearances', 'goals', 'assists'].includes(field)) {
+      const diff = guess[field] - mysteryPlayer[field];
+      if (diff !== 0) {
+        const arrow = document.createElement('span');
+        arrow.classList.add(diff < 0 ? 'arrow-up' : 'arrow-down');
+        cell.appendChild(document.createTextNode(guess[field] + ' '));
+        cell.appendChild(arrow);
+      } else {
+        cell.textContent = cellText;
+      }
+    } else {
+      cell.textContent = cellText;
+    }
+    if (field === 'name') {
+      cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
+    } else if (['age', 'appearances'].includes(field)) {
+      const diff = Math.abs(guess[field] - mysteryPlayer[field]);
+      cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 5 ? 'yellow' : 'gray');
+    } else if (['goals', 'assists'].includes(field)) {
+      const diff = Math.abs(guess[field] - mysteryPlayer[field]);
+      cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 2 ? 'yellow' : 'gray');
+    } else {
+      cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
+    }
+    row.appendChild(cell);
+  });
+  tbody.appendChild(row);
+
+  if (guess.name === mysteryPlayer.name) {
+    if (user) {
+      user.streak = (user.streak || 0) + 1;
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+    showModal(`You got it in ${guesses} guesses!`, true);
+    input.disabled = true;
+    document.querySelector('button').disabled = true;
+    revealImage();
+  } else if (guesses === maxGuesses) {
+    if (user) {
+      user.streak = 0;
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+    showModal(`Game over! It was ${mysteryPlayer.name}.`, true);
+    input.disabled = true;
+    document.querySelector('button').disabled = true;
+    revealImage();
+  }
+}
+
+function updateAuthLink() {
+  const authLink = document.getElementById('authLink');
+  if (user) {
+    authLink.textContent = `Logout (${user.username})`;
+    authLink.href = '#';
+    authLink.onclick = () => {
+      localStorage.removeItem('user');
+      user = null;
+      updateAuthLink();
+    };
+  } else {
+    authLink.textContent = 'Login/Register';
+    authLink.href = 'login.html';
+  }
+}
+
+window.onload = init;
