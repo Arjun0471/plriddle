@@ -1,3 +1,5 @@
+// [Existing teamMapping and fetchFPLData remain unchanged]
+
 const teamMapping = {
   1: "Arsenal",
   2: "Aston Villa",
@@ -12,7 +14,7 @@ const teamMapping = {
   11: "Leicester",
   12: "Liverpool",
   13: "Man City",
- 14: "Man Utd",
+  14: "Man Utd",
   15: "Newcastle",
   16: "Nott'm Forest",
   17: "Southampton",
@@ -198,6 +200,14 @@ function setupDailyTip() {
   ];
   const tip = tips[Math.floor(Math.random() * tips.length)];
   document.getElementById('dailyTip').textContent = tip;
+
+  const sidebar = document.getElementById('dailyTipSidebar');
+  const sidebarHeader = sidebar.querySelector('h3');
+  sidebarHeader.addEventListener('click', () => {
+    if (window.innerWidth <= 600) {
+      sidebar.classList.toggle('collapsed');
+    }
+  });
 }
 
 function setupMobileMenu() {
@@ -282,7 +292,6 @@ function submitGuess() {
   const guessName = input.value.trim();
   const guess = players.find(p => p.name.toLowerCase() === guessName.toLowerCase());
 
-  // Validate the guess
   if (!guess) {
     alert('Invalid player name. Please try again.');
     input.value = '';
@@ -297,12 +306,12 @@ function submitGuess() {
   updateGuessCounter();
   const tbody = document.querySelector('#guessTable tbody');
   const row = document.createElement('tr');
-  row.style.animationDelay = `${guesses * 0.1}s`; // Stagger animation
+  row.style.animationDelay = `${guesses * 0.1}s`;
 
   const fields = ['name', 'team', 'position', 'age', 'appearances', 'goals', 'assists'];
   fields.forEach(field => {
     const cell = document.createElement('td');
-    let cellText = guess[field] !== undefined ? guess[field].toString() : 'N/A'; // Handle undefined values
+    let cellText = guess[field] !== undefined ? guess[field].toString() : 'N/A';
     if (['age', 'appearances', 'goals', 'assists'].includes(field)) {
       const diff = guess[field] - mysteryPlayer[field];
       if (diff !== 0) {
@@ -317,7 +326,6 @@ function submitGuess() {
       cell.textContent = cellText;
     }
 
-    // Apply color coding
     if (field === 'name') {
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
     } else if (['age', 'appearances'].includes(field)) {
@@ -333,11 +341,9 @@ function submitGuess() {
   });
   tbody.appendChild(row);
 
-  // Clear input and hide suggestions
   input.value = '';
   document.getElementById('suggestions').style.display = 'none';
 
-  // Check win or loss conditions
   if (guess.name === mysteryPlayer.name) {
     if (user) {
       user.streak = (user.streak || 0) + 1;

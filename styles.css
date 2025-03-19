@@ -8,19 +8,29 @@ body {
   font-family: 'Roboto', sans-serif;
   background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #fef9c3 100%) url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"%3E%3Cpath d="M20 0L40 20L20 40L0 20Z" fill="%23fff" opacity="0.05"/%3E%3C/svg%3E') repeat;
   color: #1f2937;
-  line-height: 1.5;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 header {
   background: linear-gradient(90deg, #1d4ed8, #3b82f6);
-  padding: 10px 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 15px 30px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0;
+  z-index: 1000;
 }
 
 .top-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .nav-left {
@@ -29,114 +39,129 @@ header {
 }
 
 .header-logo {
-  width: 20px;
-  height: 20px;
-  margin-right: 8px;
+  width: 25px;
+  height: 25px;
+  margin-right: 12px;
   transition: transform 0.2s;
 }
 
 .header-logo:hover {
-  transform: scale(1.1);
+  transform: scale(1.2);
 }
 
 header h1 {
   color: #fff;
-  font-size: 1.8em;
+  font-size: 2em;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
 }
 
 .nav-right {
   display: flex;
-  gap: 15px;
+  gap: 20px;
 }
 
 .nav-link {
   color: #fff;
   text-decoration: none;
-  font-size: 1em;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.2s, transform 0.1s;
+  font-size: 1.1em;
+  padding: 8px 15px;
+  border-radius: 6px;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 .nav-link:hover {
   background-color: #1e40af;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .menu-toggle {
   display: none;
-  font-size: 1.5em;
+  font-size: 1.8em;
   background: none;
   border: none;
   color: #fff;
   cursor: pointer;
   position: absolute;
-  left: 10px;
-  top: 10px;
+  left: 15px;
+  top: 15px;
 }
 
 .sidebar {
   position: fixed;
-  top: 60px;
-  width: 180px;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  top: 80px;
+  width: 200px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .sidebar:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  background-color: #f9fafb;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .right-sidebar {
-  right: 10px;
+  right: 30px;
 }
 
 .sidebar h3 {
-  font-size: 1em;
-  margin-bottom: 8px;
+  font-size: 1.1em;
+  margin-bottom: 12px;
   color: #1d4ed8;
+  cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.sidebar ul {
-  list-style: none;
+.sidebar h3::after {
+  content: '▼';
+  font-size: 0.9em;
+  transition: transform 0.3s;
 }
 
-.sidebar li {
-  margin: 6px 0;
-  font-size: 0.85em;
+.sidebar.collapsed h3::after {
+  content: '▶';
+  transform: rotate(90deg);
 }
 
 #dailyTip {
-  font-size: 0.85em;
+  font-size: 0.95em;
   color: #d97706;
-  word-wrap: break-word; /* Ensure text wraps properly */
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+.sidebar.collapsed #dailyTip {
+  display: none;
 }
 
 main {
-  max-width: 800px;
-  margin: 70px auto 20px;
-  padding: 0 15px;
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 100px 0 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f4f6;
-  border-top: 4px solid #1d4ed8;
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f4f6;
+  border-top: 5px solid #1d4ed8;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
+  margin: 20px auto;
 }
 
 @keyframes spin {
@@ -146,114 +171,124 @@ main {
 
 .game-info {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .game-info p {
-  font-size: 1em;
+  font-size: 1.1em;
   color: #4b5563;
+  margin-bottom: 8px;
 }
 
 .guess-counter {
-  font-size: 1.1em;
+  font-size: 1.2em;
   font-weight: 700;
   color: #1d4ed8;
 }
 
 .silhouette-area {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 #silhouette {
-  width: 100px;
-  height: 128px;
+  width: 120px;
+  height: 150px;
   filter: grayscale(100%) contrast(1000%) brightness(0%) blur(5px);
-  transition: filter 0.4s ease, transform 0.3s ease;
+  transition: filter 0.5s ease, transform 0.4s ease;
   box-shadow: none;
   background-color: transparent;
+  border-radius: 8px;
 }
 
 #silhouette.shown {
   filter: grayscale(100%) contrast(1000%) brightness(0%);
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 #silhouette.revealed {
   filter: none;
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 #toggleSilhouette {
-  padding: 6px 14px;
-  font-size: 0.85em;
+  padding: 10px 20px;
+  font-size: 1em;
   background: linear-gradient(45deg, #1d4ed8, #3b82f6);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   text-transform: uppercase;
-  margin-top: 8px;
-  transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 12px;
+  transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 #toggleSilhouette:hover {
   background: linear-gradient(45deg, #1e40af, #2563eb);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .input-area {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 15px;
+  gap: 12px;
+  margin-bottom: 25px;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 10px;
-  background-color: #fff;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 #playerInput {
-  padding: 8px;
-  font-size: 0.95em;
-  width: 260px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 10px;
+  font-size: 1.1em;
+  width: 300px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 #playerInput:focus {
   border-color: #1d4ed8;
-  box-shadow: 0 0 8px rgba(29, 78, 216, 0.5);
+  box-shadow: 0 0 10px rgba(29, 78, 216, 0.6);
 }
 
 .suggestions {
   position: absolute;
   top: 100%;
   left: 0;
-  width: 260px;
-  max-height: 150px;
+  width: 300px;
+  max-height: 200px;
   overflow-y: auto;
   background-color: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
   list-style: none;
-  margin-top: 2px;
-  z-index: 10;
+  margin-top: 5px;
+  z-index: 1000;
   display: none;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .suggestions li {
-  padding: 6px 10px;
-  font-size: 0.9em;
+  padding: 10px;
+  font-size: 1em;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.3s;
 }
 
 .suggestions li:hover, .suggestions li.selected {
@@ -261,44 +296,46 @@ main {
 }
 
 button {
-  padding: 8px 20px;
-  font-size: 0.95em;
+  padding: 10px 25px;
+  font-size: 1.1em;
   background: linear-gradient(45deg, #1d4ed8, #3b82f6);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
   background: linear-gradient(45deg, #1e40af, #2563eb);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 table {
   width: 100%;
+  max-width: 1000px;
   border-collapse: collapse;
-  background-color: #fff;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   table-layout: fixed;
-  min-width: 600px;
+  margin-bottom: 20px;
 }
 
 th, td {
   width: 14.28%;
-  padding: 12px 8px;
-  font-size: 0.9em;
+  padding: 15px 10px;
+  font-size: 1em;
   text-align: center;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 2px solid #e5e7eb;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 th {
@@ -306,80 +343,78 @@ th {
   color: #fff;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
-td {
-  padding: 12px 8px;
-  font-size: 0.9em;
-  text-align: center;
-  border-bottom: 1px solid #e5e7eb;
+td:hover {
+  transform: translateY(-2px);
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 table tbody tr {
   opacity: 0;
-  animation: fadeIn 0.3s forwards;
+  animation: fadeIn 0.4s forwards;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-table tr {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-table tr:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .green {
   background-color: #22c55e !important;
   color: white;
+  animation: pop 0.2s ease;
 }
 
 .yellow {
   background-color: #eab308 !important;
   color: white;
+  animation: pop 0.2s ease;
 }
 
 .gray {
   background-color: #9ca3af !important;
   color: white;
+  animation: pop 0.2s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 .arrow-up, .arrow-down {
   display: inline-block;
-  width: 10px;
-  height: 10px;
-  margin-left: 5px;
+  width: 12px;
+  height: 12px;
+  margin-left: 8px;
   vertical-align: middle;
   position: relative;
-  top: -1px;
+  top: -2px;
 }
 
 .arrow-up {
   background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23fff"%3E%3Cpath d="M12 2l-10 10h20l-10-10z"/%3E%3C/svg%3E') no-repeat center;
   background-size: contain;
-  animation: pulseUp 1s infinite;
+  animation: pulseUp 1.2s infinite;
 }
 
 .arrow-down {
   background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23fff"%3E%3Cpath d="M12 22l10-10H2l10 10z"/%3E%3C/svg%3E') no-repeat center;
   background-size: contain;
-  animation: pulseDown 1s infinite;
+  animation: pulseDown 1.2s infinite;
 }
 
 @keyframes pulseUp {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  50% { transform: translateY(-4px); }
 }
 
 @keyframes pulseDown {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(3px); }
+  50% { transform: translateY(4px); }
 }
 
 .modal {
@@ -389,9 +424,10 @@ table tr:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
+  z-index: 2000;
 }
 
 .modal.active {
@@ -401,15 +437,15 @@ table tr:hover {
 .modal-content {
   background-color: #fff;
   margin: 15% auto;
-  padding: 20px;
+  padding: 25px;
   width: 90%;
-  max-width: 400px;
-  border-radius: 8px;
+  max-width: 450px;
+  border-radius: 10px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  border: 2px solid #1d4ed8;
-  transform: scale(0.9);
-  transition: transform 0.3s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  border: 3px solid #1d4ed8;
+  transform: scale(0.95);
+  transition: transform 0.4s ease;
 }
 
 .modal.active .modal-content {
@@ -417,32 +453,36 @@ table tr:hover {
 }
 
 .modal-content h2 {
-  font-size: 1.3em;
-  margin-bottom: 10px;
+  font-size: 1.5em;
+  margin-bottom: 15px;
   color: #1d4ed8;
+  font-weight: 700;
 }
 
 .modal-content ul {
   list-style: none;
   text-align: left;
-  margin: 10px 0;
+  margin: 15px 0;
+  padding: 0 20px;
 }
 
 .modal-content li {
-  margin: 6px 0;
-  font-size: 0.9em;
+  margin: 8px 0;
+  font-size: 1em;
 }
 
 .modal-buttons {
-  margin-top: 15px;
+  margin-top: 20px;
   display: flex;
-  gap: 10px;
+  gap: 15px;
   justify-content: center;
 }
 
 #shareBtn, #closeGameBtn, .modal-close-btn {
-  padding: 8px 16px;
-  font-size: 0.9em;
+  padding: 12px 25px;
+  font-size: 1em;
+  border-radius: 6px;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 #shareBtn {
@@ -451,6 +491,7 @@ table tr:hover {
 
 #shareBtn:hover {
   background-color: #059669;
+  transform: translateY(-2px);
 }
 
 #closeGameBtn, .modal-close-btn {
@@ -459,21 +500,21 @@ table tr:hover {
 
 #closeGameBtn:hover, .modal-close-btn:hover {
   background-color: #4b5563;
+  transform: translateY(-2px);
 }
 
 .modal-close-btn {
-  margin-top: 15px;
-  display: inline-block;
+  margin-top: 20px;
 }
 
 .close {
   position: absolute;
-  top: 8px;
-  right: 12px;
-  font-size: 1.5em;
+  top: 15px;
+  right: 20px;
+  font-size: 1.8em;
   cursor: pointer;
   color: #6b7280;
-  transition: color 0.2s;
+  transition: color 0.3s;
 }
 
 .close:hover {
@@ -481,36 +522,42 @@ table tr:hover {
 }
 
 footer {
-  text-align: center;
-  padding: 10px;
   background: linear-gradient(90deg, #1d4ed8, #3b82f6);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-  position: fixed;
-  bottom: 0;
+  padding: 15px;
   width: 100%;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  margin-top: auto;
 }
 
 footer p {
-  font-size: 0.9em;
+  font-size: 1em;
   color: #fff;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-width: 300px;
-  margin: 20px auto;
+  gap: 15px;
+  max-width: 350px;
+  margin: 30px auto;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 form input {
-  padding: 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  padding: 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1.1em;
 }
 
 form button {
+  padding: 12px;
   background: linear-gradient(45deg, #1d4ed8, #3b82f6);
+  font-size: 1.1em;
 }
 
 form button:hover {
@@ -527,10 +574,11 @@ form button:hover {
     flex-direction: column;
     background: linear-gradient(90deg, #1d4ed8, #3b82f6);
     position: absolute;
-    top: 40px;
+    top: 60px;
     left: 0;
     width: 100%;
-    padding: 10px;
+    padding: 15px;
+    z-index: 1000;
   }
 
   .top-nav.active {
@@ -539,20 +587,19 @@ form button:hover {
 
   .nav-right {
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
     align-items: center;
   }
 
   header {
-    padding: 10px;
-    position: relative;
+    padding: 15px;
   }
 
   footer {
     display: none;
     position: fixed;
     bottom: 0;
-    width: 100%;
+    padding: 10px;
   }
 
   footer.active {
@@ -560,76 +607,78 @@ form button:hover {
   }
 
   main {
-    margin: 20px auto 60px;
-    padding: 0 10px;
+    margin: 80px 0 60px;
+    padding: 15px;
+    background: none;
   }
 
   .silhouette-area {
-    margin-bottom: 10px;
+    margin-bottom: 20px;
   }
 
   #silhouette {
-    width: 80px;
-    height: 102px;
+    width: 90px;
+    height: 115px;
   }
 
   .input-area {
     flex-direction: column;
-    gap: 10px;
-    padding: 8px;
+    gap: 15px;
+    padding: 15px;
   }
 
   #playerInput {
     width: 100%;
-    font-size: 1em; /* Slightly larger text for readability */
+    font-size: 1em;
   }
 
   .suggestions {
     width: 100%;
-    font-size: 0.9em; /* Adjust suggestion text size */
+    font-size: 0.9em;
   }
 
   .sidebar {
-    position: static; /* Remove fixed positioning on mobile */
-    width: 100%; /* Full width on mobile */
-    top: auto; /* Remove top positioning */
-    right: auto; /* Remove right positioning */
-    margin: 10px 0; /* Add margin for spacing */
-    box-shadow: none; /* Remove shadow on mobile */
-    transition: none; /* Disable transition on mobile */
-  }
-
-  .sidebar h3 {
-    font-size: 1em;
+    position: static;
+    width: 100%;
+    top: auto;
+    right: auto;
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
   }
 
   #dailyTip {
-    font-size: 1em; /* Increase text size for readability */
-    padding: 8px; /* Add padding for better spacing */
+    font-size: 0.9em;
+    padding: 12px;
   }
 
   table {
     min-width: 0;
-    display: block;
     overflow-x: auto;
+    margin-bottom: 15px;
   }
 
   th, td {
-    width: auto;
-    font-size: 0.85em; /* Slightly larger text for mobile */
-    padding: 8px 6px; /* Increase padding for readability */
-    display: table-cell;
-  }
-
-  tr {
-    display: table-row;
+    font-size: 0.9em;
+    padding: 12px 8px;
   }
 
   .game-info p {
-    font-size: 0.9em; /* Adjust game info text */
+    font-size: 1em;
   }
 
   .guess-counter {
-    font-size: 1em; /* Adjust counter text */
+    font-size: 1.1em;
+  }
+
+  #toggleSilhouette {
+    font-size: 0.9em;
+    padding: 8px 16px;
+  }
+
+  button {
+    font-size: 1em;
+    padding: 8px 20px;
   }
 }
