@@ -179,7 +179,7 @@ async function fetchFPLData() {
         player.second_name &&
         player.code &&
         player.team &&
-        //hasPhoto // Only include players with a valid photo
+        hasPhoto // Only include players with a valid photo
       ) {
         const birthDate = new Date(player.birth_date);
         const age = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 365.25));
