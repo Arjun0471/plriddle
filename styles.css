@@ -615,6 +615,103 @@ td.green .arrow-up::after, td.green .arrow-down::after {
   background-color: #10b981;
 }
 
+#guessTable {
+  width: 100%;
+  table-layout: auto; /* Allows columns to adjust based on content */
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+#guessTable th, #guessTable td {
+  padding: 10px;
+  text-align: center;
+  white-space: nowrap; /* Prevents wrapping unless necessary */
+  overflow: visible; /* Ensures content isn’t clipped */
+}
+
+#guessTable td img.team-logo {
+  width: 40px;
+  height: 40px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #guessTable {
+    font-size: 14px;
+  }
+  #guessTable th, #guessTable td {
+    padding: 5px;
+  }
+  #guessTable td img.team-logo {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  #guessTable {
+    display: block;
+    overflow-x: auto; /* Horizontal scroll on small screens */
+  }
+}
+
+.top-nav {
+  background: linear-gradient(90deg, #1a3c6d, #2a5b9e); /* Gradient background */
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.top-nav a, .top-nav button {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 15px;
+  border-radius: 5px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.top-nav a:hover, .top-nav button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px); /* Slight lift on hover */
+}
+
+#menuToggle {
+  display: none; /* Hidden on desktop */
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Mobile menu */
+@media (max-width: 768px) {
+  #menuToggle {
+    display: block;
+  }
+  .top-nav {
+    flex-wrap: wrap;
+  }
+  .top-nav:not(.active) a, .top-nav:not(.active) button {
+    display: none; /* Hide links until toggled */
+  }
+  .top-nav.active {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .top-nav.active a, .top-nav.active button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin: 5px 0;
+  }
+}
 #shareBtn:hover {
   background-color: #059669;
   transform: translateY(-2px);
