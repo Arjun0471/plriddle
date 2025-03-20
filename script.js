@@ -24,31 +24,32 @@ async function fetchFPLData() {
   const spinner = document.getElementById('loadingSpinner');
   spinner.style.display = 'block';
   try {
-    const response = await fetch('./fpl-data-raw.json');
+    const response = await fetch('./fpl-data-raw.json'); // Use your raw data file
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     const data = await response.json();
     if (!data.elements) throw new Error("Invalid JSON structure: 'elements' missing.");
+
     const currentDate = new Date();
-    players = data.elements
-      .filter(player => 
-        player.element_type >= 1 && 
-        player.element_type <= 4 && 
-        player.minutes > 0 && 
-        player.birth_date && 
-        player.team_join_date && 
-        player.goals_scored !== undefined && 
-        player.assists !== undefined && 
-        player.first_name && 
-        player.second_name && 
-        player.code && 
+    const filteredPlayers = [];
+    for (const player of data.elements) {
+      if (
+        player.element_type >= 1 &&
+        player.element_type <= 4 &&
+        player.minutes > 0 &&
+        player.birth_date &&
+        player.team_join_date &&
+        player.goals_scored !== undefined &&
+        player.assists !== undefined &&
+        player.first_name &&
+        player.second_name &&
+        player.code &&
         player.team
-      )
-      .map((player, index) => {
+      ) {
         const birthDate = new Date(player.birth_date);
         const age = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 365.25));
         const joinDate = new Date(player.team_join_date);
         const daysAtClub = Math.floor((currentDate - joinDate) / (1000 * 60 * 60 * 24));
-        return {
+        filteredPlayers.push({
           name: `${player.first_name} ${player.second_name}`,
           team: teamMapping[player.team],
           teamId: player.team,
@@ -60,9 +61,12 @@ async function fetchFPLData() {
           assists: player.assists,
           days_at_club: daysAtClub,
           code: player.code,
-          index: index
-        };
-      });
+          index: filteredPlayers.length
+        });
+      }
+    }
+
+    players = filteredPlayers;
     spinner.style.display = 'none';
     return { players };
   } catch (error) {
@@ -85,8 +89,37 @@ function getRandomPlayer(players) {
   return players[randomIndex];
 }
 
-function ensureValidMysteryPlayer(players) {
-  return getDailyPlayer(players);
+async function checkImageExists(url) {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureValidMysteryPlayer(players) {
+  let selectedPlayer;
+  let offset = 0;
+  const maxAttempts = 10;
+
+  do {
+    const today = new Date().toDateString();
+    const baseSeed = today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const seed = baseSeed + offset;
+    const index = seed % players.length;
+    selectedPlayer = players[index];
+    const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${selectedPlayer.code}.png`;
+    const hasPhoto = await checkImageExists(photoUrl);
+    if (hasPhoto) {
+      return selectedPlayer;
+    }
+    offset++;
+    if (offset >= maxAttempts) {
+      console.warn('Could not find a daily player with a valid photo. Falling back to last attempt.');
+      return selectedPlayer;
+    }
+  } while (true);
 }
 
 function setupAutocomplete() {
@@ -176,7 +209,7 @@ function revealImage() {
   document.getElementById('toggleSilhouette').disabled = true;
 }
 
-function randomizePlayer() {
+async function randomizePlayer() {
   guesses = 0;
   guessHistory = [];
   updateGuessCounter();
@@ -184,7 +217,7 @@ function randomizePlayer() {
   document.getElementById('playerInput').disabled = false;
   document.getElementById('playerInput').value = '';
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
-  mysteryPlayer = getRandomPlayer(players);
+  mysteryPlayer = await ensureValidMysteryPlayer(players); // Await photo check
   const silhouette = document.getElementById('silhouette');
   silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
   silhouette.classList.remove('shown', 'revealed');
@@ -192,6 +225,13 @@ function randomizePlayer() {
   document.getElementById('toggleSilhouette').disabled = false;
   document.getElementById('modal').style.display = 'none';
   resetTimer();
+  attributeBounds = {
+    age: { min: 0, max: Infinity },
+    minutes: { min: 0, max: Infinity },
+    goals: { min: 0, max: Infinity },
+    assists: { min: 0, max: Infinity },
+    days_at_club: { min: 0, max: Infinity }
+  };
 }
 
 function getHint() {
@@ -284,12 +324,18 @@ function getHint() {
   }
 }
 
-function setupCustomPlayer() {
+async function setupCustomPlayer() {
   const playerName = prompt('Enter the name of the player for a custom challenge:');
   if (!playerName) return;
   const selectedPlayer = players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
   if (!selectedPlayer) {
     alert('Player not found. Please try again.');
+    return;
+  }
+  const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${selectedPlayer.code}.png`;
+  const hasPhoto = await checkImageExists(photoUrl);
+  if (!hasPhoto) {
+    alert('Selected player has no photo. Please choose another.');
     return;
   }
   guesses = 0;
@@ -301,7 +347,7 @@ function setupCustomPlayer() {
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
   mysteryPlayer = selectedPlayer;
   const silhouette = document.getElementById('silhouette');
-  silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
+  silhouette.src = photoUrl;
   silhouette.classList.remove('shown', 'revealed');
   document.getElementById('toggleSilhouette').textContent = 'Show Silhouette';
   document.getElementById('toggleSilhouette').disabled = false;
@@ -515,9 +561,9 @@ async function init() {
   user = JSON.parse(localStorage.getItem('user')) || null;
   if (customPlayerIndex) {
     const index = parseInt(customPlayerIndex, 10);
-    mysteryPlayer = players[index] || ensureValidMysteryPlayer(players);
+    mysteryPlayer = players[index] || await ensureValidMysteryPlayer(players);
   } else {
-    mysteryPlayer = ensureValidMysteryPlayer(players);
+    mysteryPlayer = await ensureValidMysteryPlayer(players); // Await the async call
   }
   setupAutocomplete();
   setupSilhouette();
