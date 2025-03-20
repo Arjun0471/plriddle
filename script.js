@@ -178,7 +178,7 @@ async function fetchFPLData() {
         player.first_name &&
         player.second_name &&
         player.code &&
-        player.team
+        player.team &&
         //hasPhoto // Only include players with a valid photo
       ) {
         const birthDate = new Date(player.birth_date);
