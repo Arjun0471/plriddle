@@ -1,47 +1,14 @@
 const teamMapping = {
-  1: "Arsenal",
-  2: "Aston Villa",
-  3: "Bournemouth",
-  4: "Brentford",
-  5: "Brighton",
-  6: "Chelsea",
-  7: "Crystal Palace",
-  8: "Everton",
-  9: "Fulham",
-  10: "Ipswich",
-  11: "Leicester",
-  12: "Liverpool",
-  13: "Man City",
-  14: "Man Utd",
-  15: "Newcastle",
-  16: "Nott'm Forest",
-  17: "Southampton",
-  18: "Spurs",
-  19: "West Ham",
-  20: "Wolves"
+  1: "Arsenal", 2: "Aston Villa", 3: "Bournemouth", 4: "Brentford", 5: "Brighton",
+  6: "Chelsea", 7: "Crystal Palace", 8: "Everton", 9: "Fulham", 10: "Ipswich",
+  11: "Leicester", 12: "Liverpool", 13: "Man City", 14: "Man Utd", 15: "Newcastle",
+  16: "Nott'm Forest", 17: "Southampton", 18: "Spurs", 19: "West Ham", 20: "Wolves"
 };
 
 const badgeMapping = {
-  1: "t3",   // Arsenal
-  2: "t7",   // Aston Villa
-  3: "t91",  // Bournemouth
-  4: "t94",  // Brentford
-  5: "t36",  // Brighton
-  6: "t8",   // Chelsea
-  7: "t31",  // Crystal Palace
-  8: "t11",  // Everton
-  9: "t54",  // Fulham
-  10: "t40", // Ipswich
-  11: "t13", // Leicester
-  12: "t14", // Liverpool
-  13: "t43", // Man City
-  14: "t1",  // Man Utd
-  15: "t4",  // Newcastle
-  16: "t17", // Nott'm Forest
-  17: "t20", // Southampton
-  18: "t6",  // Spurs
-  19: "t21", // West Ham
-  20: "t39"  // Wolves
+  1: "t3", 2: "t7", 3: "t91", 4: "t94", 5: "t36", 6: "t8", 7: "t31", 8: "t11",
+  9: "t54", 10: "t40", 11: "t13", 12: "t14", 13: "t43", 14: "t1", 15: "t4",
+  16: "t17", 17: "t20", 18: "t6", 19: "t21", 20: "t39"
 };
 
 let players = [];
@@ -51,45 +18,48 @@ let guessHistory = [];
 let user = null;
 const maxGuesses = 8;
 let timerInterval = null;
-let timeLeft = 120; // 2 minutes in seconds
+let timeLeft = 120;
 
 async function fetchFPLData() {
   const spinner = document.getElementById('loadingSpinner');
   spinner.style.display = 'block';
   try {
     const response = await fetch('./fpl-data-raw.json');
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     const data = await response.json();
-    if (!data.elements) {
-      throw new Error("Invalid JSON structure: 'elements' missing.");
-    }
+    if (!data.elements) throw new Error("Invalid JSON structure: 'elements' missing.");
 
-    const currentDate = new Date('2025-03-18');
+    const currentDate = new Date(); // Dynamic date, updates daily
     players = data.elements
-      .filter(player => player.element_type >= 1 && player.element_type <= 4)
+      .filter(player => player.element_type >= 1 && player.element_type <= 4) // Exclude managers
       .map((player, index) => {
         let age = null;
         if (player.birth_date) {
           const birthDate = new Date(player.birth_date);
-          const ageDiffMs = currentDate - birthDate;
-          const ageDate = new Date(ageDiffMs);
-          age = Math.abs(ageDate.getUTCFullYear() - 1970);
+          age = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 365.25)); // Accurate age
         } else {
-          age = Math.floor(Math.random() * 15) + 20;
+          age = Math.floor(Math.random() * 15) + 20; // Fallback
+        }
+
+        let timeAtTeam = null;
+        if (player.team_join_date) {
+          const joinDate = new Date(player.team_join_date);
+          timeAtTeam = Math.floor((currentDate - joinDate) / (1000 * 60 * 60 * 24)); // Days since joining
+        } else {
+          timeAtTeam = Math.floor(Math.random() * 1000) + 100; // Fallback: 100-1100 days
         }
 
         return {
           name: `${player.first_name} ${player.second_name}`,
           team: teamMapping[player.team] || `Team ${player.team}`,
           teamId: player.team,
-          badgeId: badgeMapping[player.team], // Use badge ID for logo
+          badgeId: badgeMapping[player.team],
           position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
           age: age,
-          appearances: Math.min(Math.floor(player.total_points / 3) + Math.floor(Math.random() * 5), 38),
+          minutes: player.minutes, // Total minutes played this season
           goals: player.goals_scored,
           assists: player.assists,
+          time_at_team: timeAtTeam, // Days at current team
           code: player.code,
           index: index
         };
@@ -106,7 +76,7 @@ async function fetchFPLData() {
 }
 
 function getDailyPlayer(players) {
-  const today = new Date().toDateString();
+  const today = new Date().toDateString(); // Dynamic daily player
   const seed = today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const index = seed % players.length;
   return players[index];
@@ -191,14 +161,9 @@ function setupSilhouette() {
     }
   };
 
-  const newPlayerBtn = document.getElementById('newPlayerBtn');
-  newPlayerBtn.onclick = randomizePlayer;
-
-  const getHintBtn = document.getElementById('getHintBtn');
-  getHintBtn.onclick = getHint;
-
-  const customPlayerBtn = document.getElementById('customPlayerBtn');
-  customPlayerBtn.onclick = setupCustomPlayer;
+  document.getElementById('newPlayerBtn').onclick = randomizePlayer;
+  document.getElementById('getHintBtn').onclick = getHint;
+  document.getElementById('customPlayerBtn').onclick = setupCustomPlayer;
 }
 
 function revealImage() {
@@ -239,26 +204,25 @@ function randomizePlayer() {
   document.getElementById('toggleSilhouette').disabled = false;
 
   document.getElementById('modal').style.display = 'none';
-
   resetTimer();
 }
 
 function getHint() {
   if (guesses >= maxGuesses) return;
 
-  const attributes = ['team', 'position', 'age', 'appearances', 'goals', 'assists'];
-  
+  const attributes = ['team', 'position', 'age', 'minutes', 'goals', 'assists', 'time_at_team'];
   const guessedAttributes = guessHistory.map(g => {
     const attrs = [];
     if (g.team === mysteryPlayer.team) attrs.push('team');
     if (g.position === mysteryPlayer.position) attrs.push('position');
     if (g.age === mysteryPlayer.age) attrs.push('age');
-    if (g.appearances === mysteryPlayer.appearances) attrs.push('appearances');
+    if (g.minutes === mysteryPlayer.minutes) attrs.push('minutes');
     if (g.goals === mysteryPlayer.goals) attrs.push('goals');
     if (g.assists === mysteryPlayer.assists) attrs.push('assists');
+    if (g.time_at_team === mysteryPlayer.time_at_team) attrs.push('time_at_team');
     return attrs;
   }).flat();
-  
+
   const available = attributes.filter(attr => !guessedAttributes.includes(attr));
   if (available.length === 0) {
     alert('No new hints available! All key attributes have been matched.');
@@ -273,7 +237,7 @@ function getHint() {
   const row = document.createElement('tr');
   row.style.animationDelay = `${guesses * 0.1}s`;
 
-  const fields = ['name', 'team', 'position', 'age', 'appearances', 'goals', 'assists'];
+  const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'time_at_team'];
   let hintText = '';
 
   fields.forEach(field => {
@@ -289,6 +253,9 @@ function getHint() {
       } else if (field === 'position') {
         cell.textContent = mysteryPlayer.position;
         hintText = `The player is a ${mysteryPlayer.position}.`;
+      } else if (field === 'time_at_team') {
+        cell.textContent = mysteryPlayer.time_at_team;
+        hintText = `The player has been at their team for ${mysteryPlayer.time_at_team} days.`;
       } else {
         const value = mysteryPlayer[field];
         const direction = Math.random() < 0.5 ? 'higher' : 'lower';
@@ -296,14 +263,20 @@ function getHint() {
         if (field === 'age') {
           hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 5) + 1) : value + (Math.floor(Math.random() * 5) + 1);
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
-        } else if (field === 'appearances') {
-          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 5) + 1) : value + (Math.floor(Math.random() * 5) + 1);
+          hintText = `The player's age is ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
+        } else if (field === 'minutes') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 500) + 1) : value + (Math.floor(Math.random() * 500) + 1);
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+          hintText = `The player's minutes are ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
         } else if (field === 'goals' || field === 'assists') {
           hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 2) + 1) : value + (Math.floor(Math.random() * 2) + 1);
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+          hintText = `The player's ${field} are ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
+        } else if (field === 'time_at_team') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 365) + 1) : value + (Math.floor(Math.random() * 365) + 1);
+          cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+          hintText = `The player has been at their team for ${direction === 'higher' ? 'more than' : 'less than'} ${hintValue} days.`;
         }
-        hintText = `The player's ${field} is ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
       }
       cell.classList.add('yellow');
     } else if (field === 'name') {
@@ -369,19 +342,9 @@ function setupDailyTip() {
   const tips = [
     "Check the silhouette for position hints!",
     "Midfielders often have high assists.",
-    "Young players may have fewer appearances.",
+    "Young players may have fewer minutes.",
     "Goalkeepers rarely score goals.",
-    "Strikers typically have more goals than assists.",
-    "Defenders might have fewer goals but more appearances.",
-    "Players from top teams often have more assists.",
-    "Age can hint at experience—older players may have more apps!",
-    "Newly promoted teams might have players with fewer PL appearances.",
-    "Some players have zero goals—don’t assume everyone scores!",
-    "Veteran players might have high appearances but fewer goals.",
-    "Assists can be a good clue for playmakers.",
-    "Young strikers might have fewer appearances but high goals.",
-    "Check the team—some clubs have distinct player profiles!",
-    "Older defenders often have more appearances."
+    "Strikers typically have more goals than assists."
   ];
   const tip = tips[Math.floor(Math.random() * tips.length)];
   document.getElementById('dailyTip').textContent = tip;
@@ -389,19 +352,14 @@ function setupDailyTip() {
   const sidebar = document.getElementById('dailyTipSidebar');
   const sidebarHeader = sidebar.querySelector('h3');
   sidebarHeader.addEventListener('click', () => {
-    if (window.innerWidth <= 600) {
-      sidebar.classList.toggle('collapsed');
-    }
+    if (window.innerWidth <= 600) sidebar.classList.toggle('collapsed');
   });
 }
 
 function setupMobileMenu() {
   const menuToggle = document.getElementById('menuToggle');
   const topNav = document.querySelector('.top-nav');
-
-  menuToggle.addEventListener('click', () => {
-    topNav.classList.toggle('active');
-  });
+  menuToggle.addEventListener('click', () => topNav.classList.toggle('active'));
 }
 
 function setupSoundToggle() {
@@ -410,15 +368,15 @@ function setupSoundToggle() {
   const isSoundOn = localStorage.getItem('soundOn') !== 'false';
   soundIcon.src = isSoundOn ? 'assets/images/sound-on.svg' : 'assets/images/sound-off.svg';
   soundIcon.alt = isSoundOn ? 'Sound On' : 'Sound Off';
-  soundIcon.classList.remove('sound-on', 'sound-off');
-  soundIcon.classList.add(isSoundOn ? 'sound-on' : 'sound-off');
+  soundIcon.classList.toggle('sound-on', isSoundOn);
+  soundIcon.classList.toggle('sound-off', !isSoundOn);
   soundToggle.addEventListener('click', () => {
     const newState = localStorage.getItem('soundOn') !== 'false';
     localStorage.setItem('soundOn', !newState);
     soundIcon.src = !newState ? 'assets/images/sound-on.svg' : 'assets/images/sound-off.svg';
     soundIcon.alt = !newState ? 'Sound On' : 'Sound Off';
-    soundIcon.classList.remove('sound-on', 'sound-off');
-    soundIcon.classList.add(!newState ? 'sound-on' : 'sound-off');
+    soundIcon.classList.toggle('sound-on', !newState);
+    soundIcon.classList.toggle('sound-off', newState);
   });
 }
 
@@ -428,18 +386,15 @@ function setupTimedMode() {
   timedModeToggle.textContent = `Timed Mode: ${isTimedMode ? 'On' : 'Off'}`;
   document.getElementById('timer').style.display = isTimedMode ? 'block' : 'none';
 
-  if (isTimedMode) {
-    startTimer();
-  }
+  if (isTimedMode) startTimer();
 
   timedModeToggle.addEventListener('click', () => {
     const newState = localStorage.getItem('timedMode') !== 'true';
     localStorage.setItem('timedMode', newState);
     timedModeToggle.textContent = `Timed Mode: ${newState ? 'On' : 'Off'}`;
     document.getElementById('timer').style.display = newState ? 'block' : 'none';
-    if (newState) {
-      startTimer();
-    } else {
+    if (newState) startTimer();
+    else {
       clearInterval(timerInterval);
       timeLeft = 120;
       updateTimerDisplay();
@@ -477,9 +432,7 @@ function resetTimer() {
   clearInterval(timerInterval);
   timeLeft = 120;
   updateTimerDisplay();
-  if (localStorage.getItem('timedMode') === 'true') {
-    startTimer();
-  }
+  if (localStorage.getItem('timedMode') === 'true') startTimer();
 }
 
 function playSound(type) {
@@ -502,9 +455,10 @@ function getShareText() {
       guess.team === mysteryPlayer.team ? '🟩' : '⬜',
       guess.position === mysteryPlayer.position ? '🟩' : '⬜',
       guess.age === mysteryPlayer.age ? '🟩' : Math.abs(guess.age - mysteryPlayer.age) <= 5 ? '🟨' : '⬜',
-      guess.appearances === mysteryPlayer.appearances ? '🟩' : Math.abs(guess.appearances - mysteryPlayer.appearances) <= 5 ? '🟨' : '⬜',
+      guess.minutes === mysteryPlayer.minutes ? '🟩' : Math.abs(guess.minutes - mysteryPlayer.minutes) <= 500 ? '🟨' : '⬜',
       guess.goals === mysteryPlayer.goals ? '🟩' : Math.abs(guess.goals - mysteryPlayer.goals) <= 2 ? '🟨' : '⬜',
-      guess.assists === mysteryPlayer.assists ? '🟩' : Math.abs(guess.assists - mysteryPlayer.assists) <= 2 ? '🟨' : '⬜'
+      guess.assists === mysteryPlayer.assists ? '🟩' : Math.abs(guess.assists - mysteryPlayer.assists) <= 2 ? '🟨' : '⬜',
+      guess.time_at_team === mysteryPlayer.time_at_team ? '🟩' : Math.abs(guess.time_at_team - mysteryPlayer.time_at_team) <= 365 ? '🟨' : '⬜'
     ];
     text += row.join('') + '\n';
   });
@@ -550,18 +504,9 @@ function updateStats(won) {
     stats.currentStreak++;
     stats.longestStreak = Math.max(stats.longestStreak, stats.currentStreak);
     stats.guessDistribution[guesses - 1]++;
-
     if (!stats.achievements.includes('firstWin') && stats.wins === 1) {
       stats.achievements.push('firstWin');
       alert('Achievement Unlocked: First Win!');
-    }
-    if (!stats.achievements.includes('streakMaster') && stats.currentStreak >= 5) {
-      stats.achievements.push('streakMaster');
-      alert('Achievement Unlocked: Streak Master!');
-    }
-    if (!stats.achievements.includes('quickGuess') && guesses <= 3) {
-      stats.achievements.push('quickGuess');
-      alert('Achievement Unlocked: Quick Guess!');
     }
   } else {
     stats.currentStreak = 0;
@@ -582,13 +527,6 @@ async function init() {
   if (customPlayerIndex) {
     const index = parseInt(customPlayerIndex, 10);
     mysteryPlayer = players[index] || getDailyPlayer(players);
-  } else if (user && user.username === 'admin') {
-    const manualPlayer = prompt('Enter player name or leave blank for random:');
-    if (manualPlayer) {
-      mysteryPlayer = players.find(p => p.name.toLowerCase() === manualPlayer.toLowerCase()) || getDailyPlayer(players);
-    } else {
-      mysteryPlayer = getDailyPlayer(players);
-    }
   } else {
     mysteryPlayer = getDailyPlayer(players);
   }
@@ -654,7 +592,7 @@ function submitGuess() {
   const row = document.createElement('tr');
   row.style.animationDelay = `${guesses * 0.1}s`;
 
-  const fields = ['name', 'team', 'position', 'age', 'appearances', 'goals', 'assists'];
+  const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'time_at_team'];
   fields.forEach(field => {
     const cell = document.createElement('td');
     if (field === 'team') {
@@ -665,7 +603,7 @@ function submitGuess() {
       cell.appendChild(img);
     } else {
       let cellText = guess[field] !== undefined ? guess[field].toString() : 'N/A';
-      if (['age', 'appearances', 'goals', 'assists'].includes(field)) {
+      if (['age', 'minutes', 'goals', 'assists', 'time_at_team'].includes(field)) {
         const diff = guess[field] - mysteryPlayer[field];
         if (diff !== 0) {
           const arrow = document.createElement('span');
@@ -682,12 +620,18 @@ function submitGuess() {
 
     if (field === 'name') {
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
-    } else if (['age', 'appearances'].includes(field)) {
+    } else if (field === 'age') {
       const diff = Math.abs(guess[field] - mysteryPlayer[field]);
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 5 ? 'yellow' : 'gray');
-    } else if (['goals', 'assists'].includes(field)) {
+    } else if (field === 'minutes') {
+      const diff = Math.abs(guess[field] - mysteryPlayer[field]);
+      cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 500 ? 'yellow' : 'gray');
+    } else if (field === 'goals' || field === 'assists') {
       const diff = Math.abs(guess[field] - mysteryPlayer[field]);
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 2 ? 'yellow' : 'gray');
+    } else if (field === 'time_at_team') {
+      const diff = Math.abs(guess[field] - mysteryPlayer[field]);
+      cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 365 ? 'yellow' : 'gray');
     } else {
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
     }

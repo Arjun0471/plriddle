@@ -1,0 +1,28 @@
+name: Update FPL Data
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install requests
+      - name: Fetch FPL data
+        run: |
+          python -c "import requests, json; r = requests.get('https://fantasy.premierleague.com/api/bootstrap-static/'); json.dump(r.json(), open('fpl-data-raw.json', 'w'))"
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add fpl-data-raw.json
+          git commit -m "Update FPL data for $(date +%Y-%m-%d)" || echo "No changes to commit"
+          git push

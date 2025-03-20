@@ -519,6 +519,17 @@ table tbody tr:hover {
   animation: pulseDown 1.2s infinite;
 }
 
+.arrow-up::after {
+  content: "↑";
+  color: #ffcc00; /* Yellow for partial match */
+}
+.arrow-down::after {
+  content: "↓";
+  color: #ffcc00;
+}
+td.green .arrow-up::after, td.green .arrow-down::after {
+  display: none; /* Hide arrows on exact match */
+}
 @keyframes pulseUp {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
