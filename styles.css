@@ -27,27 +27,16 @@ header {
 }
 
 .top-nav {
-  background: linear-gradient(90deg, #1a3c6d, #2a5b9e);
-  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Already present, reinforcing it */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  min-height: 60px; /* Ensure a consistent height for centering */
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .nav-left {
   display: flex;
-  align-items: center; /* Already present, keeping it */
-}
-
-.nav-right {
-  display: flex;
-  align-items: center; /* Ensure vertical centering */
-  gap: 20px; /* Keep for horizontal spacing */
+  align-items: center;
 }
 
 .header-logo {
@@ -55,7 +44,10 @@ header {
   height: 25px;
   margin-right: 12px;
   transition: transform 0.2s;
-  vertical-align: middle; /* Additional alignment for images */
+}
+
+.header-logo:hover {
+  transform: scale(1.2);
 }
 
 header h1 {
@@ -64,7 +56,11 @@ header h1 {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  line-height: 1; /* Prevent extra line height from shifting the title */
+}
+
+.nav-right {
+  display: flex;
+  gap: 20px;
 }
 
 .nav-link {
@@ -77,8 +73,11 @@ header h1 {
   background: none;
   border: none;
   cursor: pointer;
-  display: flex; /* Ensure buttons/links align their content */
-  align-items: center; /* Center content vertically within the link/button */
+}
+
+.nav-link:hover {
+  background-color: #1e40af;
+  transform: translateY(-2px);
 }
 
 .sound-toggle img {
@@ -153,7 +152,6 @@ header h1 {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
   transition: transform 0.3s ease;
-  display: block; /* Ensure it’s visible by default */
 }
 
 .sidebar:hover {
@@ -161,7 +159,7 @@ header h1 {
 }
 
 .right-sidebar {
-  right: 0; /* Reset right positioning for full-width */
+  right: 30px;
 }
 
 .sidebar h3 {
@@ -175,11 +173,14 @@ header h1 {
 }
 
 .sidebar h3::after {
-  content: '▼'; /* Ensure the collapse icon is visible on mobile */
+  content: '▼';
+  font-size: 0.9em;
+  transition: transform 0.3s;
 }
 
 .sidebar.collapsed h3::after {
   content: '▶';
+  transform: rotate(90deg);
 }
 
 #dailyTip {
@@ -189,12 +190,8 @@ header h1 {
   line-height: 1.4;
 }
 
-.sidebar.collapsed {
-  height: auto; /* Allow it to shrink when collapsed */
-}
-
 .sidebar.collapsed #dailyTip {
-  display: none; /* Hide tip only when explicitly collapsed */
+  display: none;
 }
 
 main {
@@ -380,11 +377,6 @@ main {
   font-size: 1em;
   cursor: pointer;
   transition: background-color 0.3s;
-}
-
-.suggestions li strong {
-  color: #1d4ed8;
-  font-weight: 700;
 }
 
 .suggestions li:hover,
@@ -698,23 +690,28 @@ td.green .arrow-up::after, td.green .arrow-down::after {
   cursor: pointer;
 }
 
-.hint-row {
-  animation: highlightHint 1s ease;
-}
-
-@keyframes highlightHint {
-  0% { background-color: rgba(255, 215, 0, 0.3); }
-  50% { background-color: rgba(255, 215, 0, 0.6); }
-  100% { background-color: transparent; }
-}
-
-.suggestions li strong {
-  color: #1d4ed8;
-  font-weight: 700;
-}
-
 /* Mobile menu */
-
+@media (max-width: 768px) {
+  #menuToggle {
+    display: block;
+  }
+  .top-nav {
+    flex-wrap: wrap;
+  }
+  .top-nav:not(.active) a, .top-nav:not(.active) button {
+    display: none; /* Hide links until toggled */
+  }
+  .top-nav.active {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .top-nav.active a, .top-nav.active button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin: 5px 0;
+  }
+}
 #shareBtn:hover {
   background-color: #059669;
   transform: translateY(-2px);
@@ -876,10 +873,11 @@ h3 {
   .menu-toggle {
     display: block;
   }
+
   .top-nav {
-    display: flex; /* Show by default on mobile */
+    display: none;
     flex-direction: column;
-    background: linear-gradient(90deg, #1a3c6d, #2a5b9e);
+    background: linear-gradient(90deg, #1d4ed8, #3b82f6);
     position: absolute;
     top: 60px;
     left: 0;
@@ -887,11 +885,11 @@ h3 {
     padding: 15px;
     z-index: 1000;
   }
-  
+
   .top-nav.active {
-    display: flex; /* Keep for consistency */
+    display: flex;
   }
-  
+
   .nav-right {
     flex-direction: column;
     gap: 15px;
@@ -934,14 +932,7 @@ h3 {
   }
 
   .sidebar {
-    display: block; /* Show sidebar on mobile by default */
-    width: 100%; /* Full width on mobile */
-    top: 70px; /* Adjust for smaller header */
-    left: 0;
-    right: 0;
-    margin: 0 10px;
-    box-sizing: border-box;
-    transform: translateY(0); /* Prevent hover transform issues */
+    display: none;
   }
 
   table {
