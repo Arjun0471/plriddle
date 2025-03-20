@@ -20,6 +20,140 @@ const maxGuesses = 8;
 let timerInterval = null;
 let timeLeft = 120;
 
+async function checkImageExists(url) {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+let attributeBounds = {
+  age: { min: 0, max: Infinity },
+  minutes: { min: 0, max: Infinity },
+  goals: { min: 0, max: Infinity },
+  assists: { min: 0, max: Infinity },
+  days_at_club: { min: 0, max: Infinity }
+};
+
+function updateBoundsFromGuess(guess) {
+  // Update bounds based on the guess
+  ['age', 'minutes', 'goals', 'assists', 'days_at_club'].forEach(attr => {
+    const guessValue = guess[attr];
+    const actualValue = mysteryPlayer[attr];
+    if (guessValue < actualValue) {
+      attributeBounds[attr].min = Math.max(attributeBounds[attr].min, guessValue + 1);
+    } else if (guessValue > actualValue) {
+      attributeBounds[attr].max = Math.min(attributeBounds[attr].max, guessValue - 1);
+    }
+  });
+}
+
+function updateBoundsFromHint(attr, direction, hintValue) {
+  if (direction === 'higher') {
+    attributeBounds[attr].min = Math.max(attributeBounds[attr].min, hintValue + 1);
+  } else {
+    attributeBounds[attr].max = Math.min(attributeBounds[attr].max, hintValue - 1);
+  }
+}
+
+function isAttributeConverged(attr) {
+  const bounds = attributeBounds[attr];
+  return bounds.min === bounds.max || (bounds.max - bounds.min <= 1 && attr === 'age'); // For age, max-min <= 1 means a single value
+}
+
+function getHint() {
+  if (guesses >= maxGuesses) return;
+  const attributes = ['team', 'position', 'age', 'minutes', 'goals', 'assists', 'days_at_club'];
+  const guessedAttributes = guessHistory.map(g => {
+    const attrs = [];
+    if (g.team === mysteryPlayer.team) attrs.push('team');
+    if (g.position === mysteryPlayer.position) attrs.push('position');
+    if (g.age === mysteryPlayer.age) attrs.push('age');
+    if (g.minutes === mysteryPlayer.minutes) attrs.push('minutes');
+    if (g.goals === mysteryPlayer.goals) attrs.push('goals');
+    if (g.assists === mysteryPlayer.assists) attrs.push('assists');
+    if (g.days_at_club === mysteryPlayer.days_at_club) attrs.push('days_at_club');
+    return attrs;
+  }).flat();
+  const available = attributes.filter(attr => {
+    if (guessedAttributes.includes(attr)) return false;
+    if (['team', 'position'].includes(attr)) return true;
+    return !isAttributeConverged(attr);
+  });
+  if (available.length === 0) {
+    showModal('No new hints available! All key attributes have been matched or determined.');
+    return;
+  }
+  const hintAttr = available[Math.floor(Math.random() * available.length)];
+  guesses++;
+  updateGuessCounter();
+  const tbody = document.querySelector('#guessTable tbody');
+  const row = document.createElement('tr');
+  row.style.animationDelay = `${guesses * 0.1}s`;
+  row.classList.add('hint-row'); // Add a class for styling
+  const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'days_at_club'];
+  fields.forEach(field => {
+    const cell = document.createElement('td');
+    if (field === hintAttr) {
+      if (field === 'team') {
+        const img = document.createElement('img');
+        img.src = `https://resources.premierleague.com/premierleague/badges/50/${mysteryPlayer.badgeId}.png`;
+        img.alt = mysteryPlayer.team;
+        img.classList.add('team-logo');
+        cell.appendChild(img);
+      } else if (field === 'position') {
+        cell.textContent = mysteryPlayer.position;
+      } else if (field === 'days_at_club') {
+        cell.textContent = mysteryPlayer.days_at_club;
+      } else {
+        const value = mysteryPlayer[field];
+        const direction = Math.random() < 0.5 ? 'higher' : 'lower';
+        let hintValue;
+        if (field === 'age') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 5) + 1) : value + (Math.floor(Math.random() * 5) + 1);
+          hintValue = Math.max(0, hintValue);
+          cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+        } else if (field === 'minutes') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 500) + 1) : value + (Math.floor(Math.random() * 500) + 1);
+          hintValue = Math.max(0, hintValue);
+          cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+        } else if (field === 'goals' || field === 'assists') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 2) + 1) : value + (Math.floor(Math.random() * 2) + 1);
+          hintValue = Math.max(0, hintValue);
+          cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+        } else if (field === 'days_at_club') {
+          hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 365) + 1) : value + (Math.floor(Math.random() * 365) + 1);
+          hintValue = Math.max(0, hintValue);
+          cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
+        }
+        updateBoundsFromHint(field, direction, hintValue);
+      }
+      cell.classList.add('yellow');
+    } else if (field === 'name') {
+      cell.textContent = 'Hint';
+      cell.classList.add('gray');
+    } else {
+      cell.textContent = '-';
+      cell.classList.add('gray');
+    }
+    row.appendChild(cell);
+  });
+  tbody.appendChild(row);
+  if (guesses === maxGuesses) {
+    if (user) {
+      user.streak = 0;
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+    showModal(`Game over! It was ${mysteryPlayer.name}.`, true);
+    document.getElementById('playerInput').disabled = true;
+    document.querySelector('button[onclick="submitGuess()"]').disabled = true;
+    revealImage();
+    updateStats(false);
+  }
+}
+
 async function fetchFPLData() {
   const spinner = document.getElementById('loadingSpinner');
   spinner.style.display = 'block';
@@ -29,26 +163,29 @@ async function fetchFPLData() {
     const data = await response.json();
     if (!data.elements) throw new Error("Invalid JSON structure: 'elements' missing.");
     const currentDate = new Date();
-    players = data.elements
-      .filter(player => 
-        player.element_type >= 1 && 
-        player.element_type <= 4 && 
-        player.minutes > 0 && 
-        player.birth_date && 
-        player.team_join_date && 
-        player.goals_scored !== undefined && 
-        player.assists !== undefined && 
-        player.first_name && 
-        player.second_name && 
-        player.code && 
-        player.team
-      )
-      .map((player, index) => {
+    const filteredPlayers = [];
+    for (const player of data.elements) {
+      const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.code}.png`;
+      const hasPhoto = await checkImageExists(photoUrl);
+      if (
+        player.element_type >= 1 &&
+        player.element_type <= 4 &&
+        player.minutes > 0 &&
+        player.birth_date &&
+        player.team_join_date &&
+        player.goals_scored !== undefined &&
+        player.assists !== undefined &&
+        player.first_name &&
+        player.second_name &&
+        player.code &&
+        player.team &&
+        hasPhoto // Only include players with a valid photo
+      ) {
         const birthDate = new Date(player.birth_date);
         const age = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 365.25));
         const joinDate = new Date(player.team_join_date);
         const daysAtClub = Math.floor((currentDate - joinDate) / (1000 * 60 * 60 * 24));
-        return {
+        filteredPlayers.push({
           name: `${player.first_name} ${player.second_name}`,
           team: teamMapping[player.team],
           teamId: player.team,
@@ -60,9 +197,11 @@ async function fetchFPLData() {
           assists: player.assists,
           days_at_club: daysAtClub,
           code: player.code,
-          index: index
-        };
-      });
+          index: filteredPlayers.length
+        });
+      }
+    }
+    players = filteredPlayers;
     spinner.style.display = 'none';
     return { players };
   } catch (error) {
@@ -86,7 +225,8 @@ function getRandomPlayer(players) {
 }
 
 function ensureValidMysteryPlayer(players) {
-  return getDailyPlayer(players);
+  let selectedPlayer = getDailyPlayer(players);
+  return selectedPlayer; // The filtering in fetchFPLData ensures the photo exists
 }
 
 function setupAutocomplete() {
@@ -103,12 +243,25 @@ function setupAutocomplete() {
       return;
     }
     const matches = players
-      .filter(p => p.name.toLowerCase().includes(query))
-      .slice(0, 5);
+      .map(player => {
+        const nameLower = player.name.toLowerCase();
+        const index = nameLower.indexOf(query);
+        return { player, index, score: index === 0 ? 0 : index > -1 ? 1 : 2 };
+      })
+      .filter(m => m.index > -1)
+      .sort((a, b) => a.score - b.score || a.player.name.localeCompare(b.player.name))
+      .slice(0, 10); // Show up to 10 suggestions
     if (matches.length > 0) {
-      matches.forEach((player, i) => {
+      matches.forEach((match, i) => {
+        const player = match.player;
         const li = document.createElement('li');
-        li.textContent = player.name;
+        const name = player.name;
+        const index = match.index;
+        const queryLength = query.length;
+        const beforeMatch = name.substring(0, index);
+        const matched = name.substring(index, index + queryLength);
+        const afterMatch = name.substring(index + queryLength);
+        li.innerHTML = `${beforeMatch}<strong>${matched}</strong>${afterMatch} (${player.team})`;
         li.onclick = () => {
           input.value = player.name;
           suggestions.style.display = 'none';
@@ -134,7 +287,7 @@ function setupAutocomplete() {
       updateSelection(items);
     } else if (e.key === 'Enter' && selectedIndex >= 0) {
       e.preventDefault();
-      input.value = items[selectedIndex].textContent;
+      input.value = items[selectedIndex].textContent.split(' (')[0];
       suggestions.style.display = 'none';
       submitGuess();
     }
@@ -147,14 +300,20 @@ function setupAutocomplete() {
 
   function updateSelection(items) {
     items.forEach((item, i) => item.classList.toggle('selected', i === selectedIndex));
-    if (selectedIndex >= 0) input.value = items[selectedIndex].textContent;
+    if (selectedIndex >= 0) input.value = items[selectedIndex].textContent.split(' (')[0];
   }
 }
 
 function setupSilhouette() {
   const silhouette = document.getElementById('silhouette');
   silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
-  silhouette.style.display = 'block';
+  silhouette.onerror = () => {
+    silhouette.alt = "Silhouette unavailable";
+    silhouette.style.display = 'block'; // Show the alt text if the image fails to load
+  };
+  silhouette.onload = () => {
+    silhouette.style.display = 'block'; // Ensure the image is visible once loaded
+  };
   const toggleButton = document.getElementById('toggleSilhouette');
   let isShown = false;
   toggleButton.onclick = () => {
@@ -192,6 +351,14 @@ function randomizePlayer() {
   document.getElementById('toggleSilhouette').disabled = false;
   document.getElementById('modal').style.display = 'none';
   resetTimer();
+  // Reset attribute bounds
+  attributeBounds = {
+    age: { min: 0, max: Infinity },
+    minutes: { min: 0, max: Infinity },
+    goals: { min: 0, max: Infinity },
+    assists: { min: 0, max: Infinity },
+    days_at_club: { min: 0, max: Infinity }
+  };
 }
 
 function getHint() {
@@ -210,7 +377,7 @@ function getHint() {
   }).flat();
   const available = attributes.filter(attr => !guessedAttributes.includes(attr));
   if (available.length === 0) {
-    alert('No new hints available! All key attributes have been matched.');
+    showModal('No new hints available! All key attributes have been matched.');
     return;
   }
   const hintAttr = available[Math.floor(Math.random() * available.length)];
@@ -243,18 +410,22 @@ function getHint() {
         let hintValue;
         if (field === 'age') {
           hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 5) + 1) : value + (Math.floor(Math.random() * 5) + 1);
+          hintValue = Math.max(0, hintValue); // Ensure non-negative
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
           hintText = `The player's age is ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
         } else if (field === 'minutes') {
           hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 500) + 1) : value + (Math.floor(Math.random() * 500) + 1);
+          hintValue = Math.max(0, hintValue); // Ensure non-negative
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
           hintText = `The player's minutes are ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
         } else if (field === 'goals' || field === 'assists') {
           hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 2) + 1) : value + (Math.floor(Math.random() * 2) + 1);
+          hintValue = Math.max(0, hintValue); // Ensure non-negative
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
           hintText = `The player's ${field} are ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
         } else if (field === 'days_at_club') {
           hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 365) + 1) : value + (Math.floor(Math.random() * 365) + 1);
+          hintValue = Math.max(0, hintValue); // Ensure non-negative
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
           hintText = `The player has been at their club for ${direction === 'higher' ? 'more than' : 'less than'} ${hintValue} days.`;
         }
@@ -270,7 +441,8 @@ function getHint() {
     row.appendChild(cell);
   });
   tbody.appendChild(row);
-  alert(hintText);
+  // Show hint in a modal instead of alert (to be removed later)
+  // alert(hintText);
   if (guesses === maxGuesses) {
     if (user) {
       user.streak = 0;
@@ -323,8 +495,14 @@ function setupDailyTip() {
   document.getElementById('dailyTip').textContent = tip;
   const sidebar = document.getElementById('dailyTipSidebar');
   const sidebarHeader = sidebar.querySelector('h3');
+  // Ensure the sidebar is not collapsed by default
+  if (window.innerWidth <= 600) {
+    sidebar.classList.remove('collapsed'); // Ensure it’s visible on mobile initially
+  }
   sidebarHeader.addEventListener('click', () => {
-    if (window.innerWidth <= 600) sidebar.classList.toggle('collapsed');
+    if (window.innerWidth <= 600) {
+      sidebar.classList.toggle('collapsed');
+    }
   });
 }
 
@@ -493,9 +671,39 @@ function updateStats(won) {
     stats.currentStreak++;
     stats.longestStreak = Math.max(stats.longestStreak, stats.currentStreak);
     stats.guessDistribution[guesses - 1]++;
+    // Check for new achievements
     if (!stats.achievements.includes('firstWin') && stats.wins === 1) {
       stats.achievements.push('firstWin');
-      alert('Achievement Unlocked: First Win!');
+      showModal('Achievement Unlocked: First Win!');
+    }
+    if (!stats.achievements.includes('streakMaster') && stats.currentStreak >= 5) {
+      stats.achievements.push('streakMaster');
+      showModal('Achievement Unlocked: Streak Master!');
+    }
+    if (!stats.achievements.includes('quickGuess') && guesses <= 3) {
+      stats.achievements.push('quickGuess');
+      showModal('Achievement Unlocked: Quick Guess!');
+    }
+    if (!stats.achievements.includes('perfectGame') && guesses === 1) {
+      stats.achievements.push('perfectGame');
+      showModal('Achievement Unlocked: Perfect Game!');
+    }
+    if (!stats.achievements.includes('tenWins') && stats.wins >= 10) {
+      stats.achievements.push('tenWins');
+      showModal('Achievement Unlocked: Ten Wins!');
+    }
+    const hintsUsed = guessHistory.filter(g => g.name === 'Hint').length;
+    if (!stats.achievements.includes('hintMaster') && hintsUsed >= 3) {
+      stats.achievements.push('hintMaster');
+      showModal('Achievement Unlocked: Hint Master!');
+    }
+    if (!stats.achievements.includes('noHints') && hintsUsed === 0) {
+      stats.achievements.push('noHints');
+      showModal('Achievement Unlocked: No Hints!');
+    }
+    if (!stats.achievements.includes('timedChallenge') && localStorage.getItem('timedMode') === 'true') {
+      stats.achievements.push('timedChallenge');
+      showModal('Achievement Unlocked: Timed Challenge!');
     }
   } else {
     stats.currentStreak = 0;
@@ -561,7 +769,7 @@ function submitGuess() {
   const guessName = input.value.trim();
   const guess = players.find(p => p.name.toLowerCase() === guessName.toLowerCase());
   if (!guess) {
-    alert('Invalid player name. Please try again.');
+    showModal('Invalid player name. Please try again.');
     input.value = '';
     document.getElementById('suggestions').style.display = 'none';
     return;
@@ -618,6 +826,7 @@ function submitGuess() {
     row.appendChild(cell);
   });
   tbody.appendChild(row);
+  updateBoundsFromGuess(guess); // Update bounds after each guess
   input.value = '';
   document.getElementById('suggestions').style.display = 'none';
   if (guess.name === mysteryPlayer.name) {
