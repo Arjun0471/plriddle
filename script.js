@@ -98,6 +98,16 @@ async function checkImageExists(url) {
   }
 }
 
+function saveGameState() {
+  const gameState = {
+    guesses,
+    guessHistory,
+    mysteryPlayer,
+    attributeBounds
+  };
+  localStorage.setItem('gameState', JSON.stringify(gameState));
+}
+
 async function ensureValidMysteryPlayer(players) {
   let selectedPlayer;
   let offset = 0;
@@ -218,6 +228,7 @@ async function randomizePlayer() {
   document.getElementById('playerInput').value = '';
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
   mysteryPlayer = await ensureValidMysteryPlayer(players); // Await photo check
+  saveGameState();
   const silhouette = document.getElementById('silhouette');
   silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
   silhouette.classList.remove('shown', 'revealed');
@@ -233,6 +244,19 @@ async function randomizePlayer() {
     days_at_club: { min: 0, max: Infinity }
   };
 }
+
+document.getElementById('giveUpBtn').onclick = () => {
+  if (guesses < maxGuesses) {
+    guesses = maxGuesses;
+    updateGuessCounter();
+    showModal(`You gave up! It was ${mysteryPlayer.name}.`, true);
+    document.getElementById('playerInput').disabled = true;
+    document.querySelector('button[onclick="submitGuess()"]').disabled = true;
+    revealImage();
+    updateStats(false); // Update with loss
+    saveGameState();
+  }
+};
 
 function getHint() {
   if (guesses >= maxGuesses) return;
@@ -363,7 +387,12 @@ function setupDailyTip() {
     "Midfielders often have high assists.",
     "Young players may have fewer minutes.",
     "Goalkeepers rarely score goals.",
-    "Strikers typically have more goals than assists."
+    "Strikers typically have more goals than assists.",
+    "Veteran players often have high days at club.",
+    "Defenders might have low goals but high minutes.",
+    "Players with high minutes are often starters.",
+    "Assists can hint at creative midfielders.",
+    "Older players might have fewer recent goals."
   ];
   const tip = tips[Math.floor(Math.random() * tips.length)];
   document.getElementById('dailyTip').textContent = tip;
@@ -543,6 +572,19 @@ function updateStats(won) {
       stats.achievements.push('firstWin');
       alert('Achievement Unlocked: First Win!');
     }
+    if (!stats.achievements.includes('veteran') && stats.totalGames >= 50) {
+      stats.achievements.push('veteran');
+      showModal('Achievement Unlocked: Veteran!');
+    }
+    const lastGuess = guessHistory[guessHistory.length - 1];
+    if (!stats.achievements.includes('goalScorer') && lastGuess.goals >= 10) {
+      stats.achievements.push('goalScorer');
+      showModal('Achievement Unlocked: Goal Scorer!');
+    }
+    if (!stats.achievements.includes('assistKing') && lastGuess.assists >= 10) {
+      stats.achievements.push('assistKing');
+      showModal('Achievement Unlocked: Assist King!');
+    }
   } else {
     stats.currentStreak = 0;
   }
@@ -559,12 +601,79 @@ async function init() {
     return;
   }
   user = JSON.parse(localStorage.getItem('user')) || null;
-  if (customPlayerIndex) {
-    const index = parseInt(customPlayerIndex, 10);
-    mysteryPlayer = players[index] || await ensureValidMysteryPlayer(players);
+
+  // Restore game state if available
+  const savedState = JSON.parse(localStorage.getItem('gameState'));
+  if (savedState && !customPlayerIndex) {
+    guesses = savedState.guesses;
+    guessHistory = savedState.guessHistory;
+    mysteryPlayer = savedState.mysteryPlayer;
+    attributeBounds = savedState.attributeBounds;
+    updateGuessCounter();
+    const tbody = document.querySelector('#guessTable tbody');
+    tbody.innerHTML = ''; // Clear table
+    guessHistory.forEach((guess, i) => {
+      // Rebuild table rows (copy logic from submitGuess)
+      const row = document.createElement('tr');
+      row.style.animationDelay = `${i * 0.1}s`;
+      const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'days_at_club'];
+      fields.forEach(field => {
+        const cell = document.createElement('td');
+        if (field === 'team') {
+          const img = document.createElement('img');
+          img.src = `https://resources.premierleague.com/premierleague/badges/50/${guess.badgeId}.png`;
+          img.alt = guess.team;
+          img.classList.add('team-logo');
+          cell.appendChild(img);
+        } else {
+          let cellText = guess[field].toString();
+          if (['age', 'minutes', 'goals', 'assists', 'days_at_club'].includes(field)) {
+            const diff = guess[field] - mysteryPlayer[field];
+            if (diff !== 0) {
+              const arrow = document.createElement('span');
+              arrow.classList.add(diff < 0 ? 'arrow-up' : 'arrow-down');
+              cell.appendChild(document.createTextNode(cellText + ' '));
+              cell.appendChild(arrow);
+            } else {
+              cell.textContent = cellText;
+            }
+          } else {
+            cell.textContent = cellText;
+          }
+        }
+        if (field === 'name') {
+          cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
+        } else if (field === 'age') {
+          const diff = Math.abs(guess[field] - mysteryPlayer[field]);
+          cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 5 ? 'yellow' : 'gray');
+        } else if (field === 'minutes') {
+          const diff = Math.abs(guess[field] - mysteryPlayer[field]);
+          cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 500 ? 'yellow' : 'gray');
+        } else if (field === 'goals' || field === 'assists') {
+          const diff = Math.abs(guess[field] - mysteryPlayer[field]);
+          cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 2 ? 'yellow' : 'gray');
+        } else if (field === 'days_at_club') {
+          const diff = Math.abs(guess[field] - mysteryPlayer[field]);
+          cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 365 ? 'yellow' : 'gray');
+        } else {
+          cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
+        }
+        row.appendChild(cell);
+      });
+      tbody.appendChild(row);
+    });
   } else {
-    mysteryPlayer = await ensureValidMysteryPlayer(players); // Await the async call
+    if (customPlayerIndex) {
+      const index = parseInt(customPlayerIndex, 10);
+      mysteryPlayer = players[index] || await ensureValidMysteryPlayer(players);
+    } else {
+      mysteryPlayer = await ensureValidMysteryPlayer(players);
+    }
+    guesses = 0;
+    guessHistory = [];
+    saveGameState();
   }
+
   setupAutocomplete();
   setupSilhouette();
   setupDailyTip();
@@ -616,6 +725,7 @@ function submitGuess() {
   guesses++;
   guessHistory.push(guess);
   updateGuessCounter();
+  saveGameState();
   const tbody = document.querySelector('#guessTable tbody');
   const row = document.createElement('tr');
   row.style.animationDelay = `${guesses * 0.1}s`;
@@ -670,6 +780,7 @@ function submitGuess() {
     if (user) {
       user.streak = (user.streak || 0) + 1;
       localStorage.setItem('user', JSON.stringify(user));
+      updateStats(true);
     }
     playSound('win');
     showModal(`You got it in ${guesses} guesses!`, true);
