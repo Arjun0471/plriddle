@@ -19,6 +19,13 @@ let user = null;
 const maxGuesses = 8;
 let timerInterval = null;
 let timeLeft = 120;
+let attributeBounds = { // Add globally
+  age: { min: 0, max: Infinity },
+  minutes: { min: 0, max: Infinity },
+  goals: { min: 0, max: Infinity },
+  assists: { min: 0, max: Infinity },
+  days_at_club: { min: 0, max: Infinity }
+};
 
 async function fetchFPLData() {
   const spinner = document.getElementById('loadingSpinner');
@@ -602,18 +609,16 @@ async function init() {
   }
   user = JSON.parse(localStorage.getItem('user')) || null;
 
-  // Restore game state if available
   const savedState = JSON.parse(localStorage.getItem('gameState'));
   if (savedState && !customPlayerIndex) {
     guesses = savedState.guesses;
     guessHistory = savedState.guessHistory;
     mysteryPlayer = savedState.mysteryPlayer;
-    attributeBounds = savedState.attributeBounds;
+    attributeBounds = savedState.attributeBounds || attributeBounds; // Fallback to default
     updateGuessCounter();
     const tbody = document.querySelector('#guessTable tbody');
-    tbody.innerHTML = ''; // Clear table
+    tbody.innerHTML = '';
     guessHistory.forEach((guess, i) => {
-      // Rebuild table rows (copy logic from submitGuess)
       const row = document.createElement('tr');
       row.style.animationDelay = `${i * 0.1}s`;
       const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'days_at_club'];
@@ -665,12 +670,19 @@ async function init() {
   } else {
     if (customPlayerIndex) {
       const index = parseInt(customPlayerIndex, 10);
-      mysteryPlayer = players[index] || await ensureValidMysteryPlayer(players);
+      mysteryPlayer = players[index] || ensureValidMysteryPlayer(players); // No await
     } else {
-      mysteryPlayer = await ensureValidMysteryPlayer(players);
+      mysteryPlayer = ensureValidMysteryPlayer(players); // No await
     }
     guesses = 0;
     guessHistory = [];
+    attributeBounds = { // Reset for new game
+      age: { min: 0, max: Infinity },
+      minutes: { min: 0, max: Infinity },
+      goals: { min: 0, max: Infinity },
+      assists: { min: 0, max: Infinity },
+      days_at_club: { min: 0, max: Infinity }
+    };
     saveGameState();
   }
 
