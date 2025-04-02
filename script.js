@@ -28,41 +28,43 @@ async function fetchFPLData() {
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     const data = await response.json();
     if (!data.elements) throw new Error("Invalid JSON structure: 'elements' missing.");
-    const currentDate = new Date();
+
+    const currentDate = new Date(); // Dynamic date, updates daily
     players = data.elements
-      .filter(player => 
-        player.element_type >= 1 && 
-        player.element_type <= 4 && 
-        player.minutes > 0 && 
-        player.birth_date && 
-        player.team_join_date && 
-        player.goals_scored !== undefined && 
-        player.assists !== undefined && 
-        player.first_name && 
-        player.second_name && 
-        player.code && 
-        player.team
-      )
+      .filter(player => player.element_type >= 1 && player.element_type <= 4) // Exclude managers
       .map((player, index) => {
-        const birthDate = new Date(player.birth_date);
-        const age = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 365.25));
-        const joinDate = new Date(player.team_join_date);
-        const daysAtClub = Math.floor((currentDate - joinDate) / (1000 * 60 * 60 * 24));
+        let age = null;
+        if (player.birth_date) {
+          const birthDate = new Date(player.birth_date);
+          age = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 365.25)); // Accurate age
+        } else {
+          age = Math.floor(Math.random() * 15) + 20; // Fallback
+        }
+
+        let timeAtTeam = null;
+        if (player.team_join_date) {
+          const joinDate = new Date(player.team_join_date);
+          timeAtTeam = Math.floor((currentDate - joinDate) / (1000 * 60 * 60 * 24)); // Days since joining
+        } else {
+          timeAtTeam = Math.floor(Math.random() * 1000) + 100; // Fallback: 100-1100 days
+        }
+
         return {
           name: `${player.first_name} ${player.second_name}`,
-          team: teamMapping[player.team],
+          team: teamMapping[player.team] || `Team ${player.team}`,
           teamId: player.team,
           badgeId: badgeMapping[player.team],
           position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
           age: age,
-          minutes: player.minutes,
+          minutes: player.minutes, // Total minutes played this season
           goals: player.goals_scored,
           assists: player.assists,
-          days_at_club: daysAtClub,
+          time_at_team: timeAtTeam, // Days at current team
           code: player.code,
           index: index
         };
       });
+
     spinner.style.display = 'none';
     return { players };
   } catch (error) {
@@ -74,19 +76,10 @@ async function fetchFPLData() {
 }
 
 function getDailyPlayer(players) {
-  const today = new Date().toDateString();
+  const today = new Date().toDateString(); // Dynamic daily player
   const seed = today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const index = seed % players.length;
   return players[index];
-}
-
-function getRandomPlayer(players) {
-  const randomIndex = Math.floor(Math.random() * players.length);
-  return players[randomIndex];
-}
-
-function ensureValidMysteryPlayer(players) {
-  return getDailyPlayer(players);
 }
 
 function setupAutocomplete() {
@@ -102,6 +95,7 @@ function setupAutocomplete() {
       suggestions.style.display = 'none';
       return;
     }
+
     const matches = players
       .filter(p => p.name.toLowerCase().includes(query))
       .slice(0, 5);
@@ -124,6 +118,7 @@ function setupAutocomplete() {
   input.addEventListener('keydown', (e) => {
     const items = suggestions.querySelectorAll('li');
     if (!items.length || suggestions.style.display === 'none') return;
+
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
@@ -155,6 +150,7 @@ function setupSilhouette() {
   const silhouette = document.getElementById('silhouette');
   silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
   silhouette.style.display = 'block';
+
   const toggleButton = document.getElementById('toggleSilhouette');
   let isShown = false;
   toggleButton.onclick = () => {
@@ -164,6 +160,7 @@ function setupSilhouette() {
       toggleButton.textContent = isShown ? 'Hide Silhouette' : 'Show Silhouette';
     }
   };
+
   document.getElementById('newPlayerBtn').onclick = randomizePlayer;
   document.getElementById('getHintBtn').onclick = getHint;
   document.getElementById('customPlayerBtn').onclick = setupCustomPlayer;
@@ -176,6 +173,19 @@ function revealImage() {
   document.getElementById('toggleSilhouette').disabled = true;
 }
 
+let lastPlayer = null;
+
+function getRandomPlayer(players) {
+  let randomIndex;
+  let newPlayer;
+  do {
+    randomIndex = Math.floor(Math.random() * players.length);
+    newPlayer = players[randomIndex];
+  } while (newPlayer === lastPlayer && players.length > 1);
+  lastPlayer = newPlayer;
+  return newPlayer;
+}
+
 function randomizePlayer() {
   guesses = 0;
   guessHistory = [];
@@ -184,19 +194,23 @@ function randomizePlayer() {
   document.getElementById('playerInput').disabled = false;
   document.getElementById('playerInput').value = '';
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
+
   mysteryPlayer = getRandomPlayer(players);
+
   const silhouette = document.getElementById('silhouette');
   silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
   silhouette.classList.remove('shown', 'revealed');
   document.getElementById('toggleSilhouette').textContent = 'Show Silhouette';
   document.getElementById('toggleSilhouette').disabled = false;
+
   document.getElementById('modal').style.display = 'none';
   resetTimer();
 }
 
 function getHint() {
   if (guesses >= maxGuesses) return;
-  const attributes = ['team', 'position', 'age', 'minutes', 'goals', 'assists', 'days_at_club'];
+
+  const attributes = ['team', 'position', 'age', 'minutes', 'goals', 'assists', 'time_at_team'];
   const guessedAttributes = guessHistory.map(g => {
     const attrs = [];
     if (g.team === mysteryPlayer.team) attrs.push('team');
@@ -205,22 +219,27 @@ function getHint() {
     if (g.minutes === mysteryPlayer.minutes) attrs.push('minutes');
     if (g.goals === mysteryPlayer.goals) attrs.push('goals');
     if (g.assists === mysteryPlayer.assists) attrs.push('assists');
-    if (g.days_at_club === mysteryPlayer.days_at_club) attrs.push('days_at_club');
+    if (g.time_at_team === mysteryPlayer.time_at_team) attrs.push('time_at_team');
     return attrs;
   }).flat();
+
   const available = attributes.filter(attr => !guessedAttributes.includes(attr));
   if (available.length === 0) {
     alert('No new hints available! All key attributes have been matched.');
     return;
   }
+
   const hintAttr = available[Math.floor(Math.random() * available.length)];
   guesses++;
   updateGuessCounter();
+
   const tbody = document.querySelector('#guessTable tbody');
   const row = document.createElement('tr');
   row.style.animationDelay = `${guesses * 0.1}s`;
-  const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'days_at_club'];
+
+  const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'time_at_team'];
   let hintText = '';
+
   fields.forEach(field => {
     const cell = document.createElement('td');
     if (field === hintAttr) {
@@ -234,9 +253,9 @@ function getHint() {
       } else if (field === 'position') {
         cell.textContent = mysteryPlayer.position;
         hintText = `The player is a ${mysteryPlayer.position}.`;
-      } else if (field === 'days_at_club') {
-        cell.textContent = mysteryPlayer.days_at_club;
-        hintText = `The player has been at their club for ${mysteryPlayer.days_at_club} days.`;
+      } else if (field === 'time_at_team') {
+        cell.textContent = mysteryPlayer.time_at_team;
+        hintText = `The player has been at their team for ${mysteryPlayer.time_at_team} days.`;
       } else {
         const value = mysteryPlayer[field];
         const direction = Math.random() < 0.5 ? 'higher' : 'lower';
@@ -253,10 +272,10 @@ function getHint() {
           hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 2) + 1) : value + (Math.floor(Math.random() * 2) + 1);
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
           hintText = `The player's ${field} are ${direction === 'higher' ? 'greater than' : 'less than'} ${hintValue}.`;
-        } else if (field === 'days_at_club') {
+        } else if (field === 'time_at_team') {
           hintValue = direction === 'higher' ? value - (Math.floor(Math.random() * 365) + 1) : value + (Math.floor(Math.random() * 365) + 1);
           cell.textContent = `${direction === 'higher' ? '>' : '<'} ${hintValue}`;
-          hintText = `The player has been at their club for ${direction === 'higher' ? 'more than' : 'less than'} ${hintValue} days.`;
+          hintText = `The player has been at their team for ${direction === 'higher' ? 'more than' : 'less than'} ${hintValue} days.`;
         }
       }
       cell.classList.add('yellow');
@@ -270,7 +289,9 @@ function getHint() {
     row.appendChild(cell);
   });
   tbody.appendChild(row);
+
   alert(hintText);
+
   if (guesses === maxGuesses) {
     if (user) {
       user.streak = 0;
@@ -287,11 +308,13 @@ function getHint() {
 function setupCustomPlayer() {
   const playerName = prompt('Enter the name of the player for a custom challenge:');
   if (!playerName) return;
+
   const selectedPlayer = players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
   if (!selectedPlayer) {
     alert('Player not found. Please try again.');
     return;
   }
+
   guesses = 0;
   guessHistory = [];
   updateGuessCounter();
@@ -299,13 +322,17 @@ function setupCustomPlayer() {
   document.getElementById('playerInput').disabled = false;
   document.getElementById('playerInput').value = '';
   document.querySelector('button[onclick="submitGuess()"]').disabled = false;
+
   mysteryPlayer = selectedPlayer;
+
   const silhouette = document.getElementById('silhouette');
   silhouette.src = `https://resources.premierleague.com/premierleague/photos/players/250x250/p${mysteryPlayer.code}.png`;
   silhouette.classList.remove('shown', 'revealed');
   document.getElementById('toggleSilhouette').textContent = 'Show Silhouette';
   document.getElementById('toggleSilhouette').disabled = false;
+
   document.getElementById('modal').style.display = 'none';
+
   const customLink = `${window.location.origin}${window.location.pathname}?pid=${selectedPlayer.index}`;
   navigator.clipboard.writeText(customLink);
   alert(`Custom challenge link copied to clipboard: ${customLink}`);
@@ -321,6 +348,7 @@ function setupDailyTip() {
   ];
   const tip = tips[Math.floor(Math.random() * tips.length)];
   document.getElementById('dailyTip').textContent = tip;
+
   const sidebar = document.getElementById('dailyTipSidebar');
   const sidebarHeader = sidebar.querySelector('h3');
   sidebarHeader.addEventListener('click', () => {
@@ -357,7 +385,9 @@ function setupTimedMode() {
   const isTimedMode = localStorage.getItem('timedMode') === 'true';
   timedModeToggle.textContent = `Timed Mode: ${isTimedMode ? 'On' : 'Off'}`;
   document.getElementById('timer').style.display = isTimedMode ? 'block' : 'none';
+
   if (isTimedMode) startTimer();
+
   timedModeToggle.addEventListener('click', () => {
     const newState = localStorage.getItem('timedMode') !== 'true';
     localStorage.setItem('timedMode', newState);
@@ -428,7 +458,7 @@ function getShareText() {
       guess.minutes === mysteryPlayer.minutes ? '🟩' : Math.abs(guess.minutes - mysteryPlayer.minutes) <= 500 ? '🟨' : '⬜',
       guess.goals === mysteryPlayer.goals ? '🟩' : Math.abs(guess.goals - mysteryPlayer.goals) <= 2 ? '🟨' : '⬜',
       guess.assists === mysteryPlayer.assists ? '🟩' : Math.abs(guess.assists - mysteryPlayer.assists) <= 2 ? '🟨' : '⬜',
-      guess.days_at_club === mysteryPlayer.days_at_club ? '🟩' : Math.abs(guess.days_at_club - mysteryPlayer.days_at_club) <= 365 ? '🟨' : '⬜'
+      guess.time_at_team === mysteryPlayer.time_at_team ? '🟩' : Math.abs(guess.time_at_team - mysteryPlayer.time_at_team) <= 365 ? '🟨' : '⬜'
     ];
     text += row.join('') + '\n';
   });
@@ -437,43 +467,23 @@ function getShareText() {
 
 async function shareImage() {
   const table = document.getElementById('guessTable');
-  try {
-    const canvas = await html2canvas(table, { scale: 2, useCORS: true });
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        console.error('Canvas to Blob failed');
-        alert('Failed to generate share image. Try again.');
-        return;
-      }
-      const file = new File([blob], 'pl-riddle-result.png', { type: 'image/png' });
-      const filesArray = [file];
-      const shareData = {
+  const canvas = await html2canvas(table);
+  canvas.toBlob(blob => {
+    const file = new File([blob], 'pl-riddle-result.png', { type: 'image/png' });
+    const filesArray = [file];
+    if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+      navigator.share({
         files: filesArray,
         title: `PL Riddle ${new Date().toLocaleDateString()}`,
         text: getShareText()
-      };
-      if (navigator.canShare && navigator.canShare({ files: filesArray })) {
-        try {
-          await navigator.share(shareData);
-        } catch (err) {
-          console.error('Share failed:', err);
-          fallbackDownload(canvas);
-        }
-      } else {
-        fallbackDownload(canvas);
-      }
-    }, 'image/png');
-  } catch (error) {
-    console.error('html2canvas error:', error);
-    alert('Share failed. Check console for details.');
-  }
-}
-
-function fallbackDownload(canvas) {
-  const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png');
-  link.download = 'pl-riddle-result.png';
-  link.click();
+      });
+    } else {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'pl-riddle-result.png';
+      link.click();
+    }
+  });
 }
 
 function updateStats(won) {
@@ -486,6 +496,7 @@ function updateStats(won) {
     guessDistribution: Array(8).fill(0),
     achievements: []
   };
+
   stats.totalGames++;
   if (won) {
     stats.wins++;
@@ -500,25 +511,26 @@ function updateStats(won) {
   } else {
     stats.currentStreak = 0;
   }
+
   localStorage.setItem('gameStats', JSON.stringify(stats));
 }
 
 async function init() {
   const urlParams = new URLSearchParams(window.location.search);
   const customPlayerIndex = urlParams.get('pid');
+
   const data = await fetchFPLData();
   players = data.players;
-  if (players.length === 0) {
-    showModal('No valid players found. Please refresh or check data source.');
-    return;
-  }
+  if (players.length === 0) return;
+
   user = JSON.parse(localStorage.getItem('user')) || null;
   if (customPlayerIndex) {
     const index = parseInt(customPlayerIndex, 10);
-    mysteryPlayer = players[index] || ensureValidMysteryPlayer(players);
+    mysteryPlayer = players[index] || getDailyPlayer(players);
   } else {
-    mysteryPlayer = ensureValidMysteryPlayer(players);
+    mysteryPlayer = getDailyPlayer(players);
   }
+
   setupAutocomplete();
   setupSilhouette();
   setupDailyTip();
@@ -538,12 +550,15 @@ function showModal(message, showShare = false) {
   const shareBtn = document.getElementById('shareBtn');
   const tweetBtn = document.getElementById('tweetBtn');
   const closeGameBtn = document.getElementById('closeGameBtn');
+
   result.textContent = message;
   shareBtn.style.display = showShare ? 'inline-block' : 'none';
   tweetBtn.style.display = showShare ? 'inline-block' : 'none';
   closeGameBtn.style.display = showShare ? 'inline-block' : 'none';
+
   modal.style.display = 'block';
   modal.classList.add('active');
+
   if (showShare) {
     shareBtn.onclick = shareImage;
     tweetBtn.onclick = () => {
@@ -560,20 +575,24 @@ function submitGuess() {
   const input = document.getElementById('playerInput');
   const guessName = input.value.trim();
   const guess = players.find(p => p.name.toLowerCase() === guessName.toLowerCase());
+
   if (!guess) {
     alert('Invalid player name. Please try again.');
     input.value = '';
     document.getElementById('suggestions').style.display = 'none';
     return;
   }
+
   if (guesses >= maxGuesses) return;
+
   guesses++;
   guessHistory.push(guess);
   updateGuessCounter();
   const tbody = document.querySelector('#guessTable tbody');
   const row = document.createElement('tr');
   row.style.animationDelay = `${guesses * 0.1}s`;
-  const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'days_at_club'];
+
+  const fields = ['name', 'team', 'position', 'age', 'minutes', 'goals', 'assists', 'time_at_team'];
   fields.forEach(field => {
     const cell = document.createElement('td');
     if (field === 'team') {
@@ -583,8 +602,8 @@ function submitGuess() {
       img.classList.add('team-logo');
       cell.appendChild(img);
     } else {
-      let cellText = guess[field].toString();
-      if (['age', 'minutes', 'goals', 'assists', 'days_at_club'].includes(field)) {
+      let cellText = guess[field] !== undefined ? guess[field].toString() : 'N/A';
+      if (['age', 'minutes', 'goals', 'assists', 'time_at_team'].includes(field)) {
         const diff = guess[field] - mysteryPlayer[field];
         if (diff !== 0) {
           const arrow = document.createElement('span');
@@ -598,6 +617,7 @@ function submitGuess() {
         cell.textContent = cellText;
       }
     }
+
     if (field === 'name') {
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : 'gray');
     } else if (field === 'age') {
@@ -609,7 +629,7 @@ function submitGuess() {
     } else if (field === 'goals' || field === 'assists') {
       const diff = Math.abs(guess[field] - mysteryPlayer[field]);
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 2 ? 'yellow' : 'gray');
-    } else if (field === 'days_at_club') {
+    } else if (field === 'time_at_team') {
       const diff = Math.abs(guess[field] - mysteryPlayer[field]);
       cell.classList.add(guess[field] === mysteryPlayer[field] ? 'green' : diff <= 365 ? 'yellow' : 'gray');
     } else {
@@ -618,8 +638,10 @@ function submitGuess() {
     row.appendChild(cell);
   });
   tbody.appendChild(row);
+
   input.value = '';
   document.getElementById('suggestions').style.display = 'none';
+
   if (guess.name === mysteryPlayer.name) {
     if (user) {
       user.streak = (user.streak || 0) + 1;
