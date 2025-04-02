@@ -1,51 +1,54 @@
-const allAchievements = [
-  { id: 'firstWin', name: 'First Win', description: 'Win your first game' },
-  { id: 'streakMaster', name: 'Streak Master', description: 'Achieve a streak of 5 wins' },
-  { id: 'quickGuess', name: 'Quick Guess', description: 'Win in 3 guesses or fewer' },
-  { id: 'perfectGame', name: 'Perfect Game', description: 'Win in 1 guess' },
-  { id: 'tenWins', name: 'Ten Wins', description: 'Win 10 games' },
-  { id: 'hintMaster', name: 'Hint Master', description: 'Win a game after using 3 hints' },
-  { id: 'noHints', name: 'No Hints', description: 'Win a game without using any hints' },
-  { id: 'timedChallenge', name: 'Timed Challenge', description: 'Win a game in Timed Mode' },
-  { id: 'veteran', name: 'Veteran', description: 'Play 50 games' },
-  { id: 'goalScorer', name: 'Goal Scorer', description: 'Guess a player with 10+ goals' },
-  { id: 'assistKing', name: 'Assist King', description: 'Guess a player with 10+ assists' }
-];
-
 function loadStats() {
-  const stats = JSON.parse(localStorage.getItem('gameStats')) || {
-    totalGames: 0,
-    wins: 0,
-    currentStreak: 0,
-    maxStreak: 0,
-    achievements: []
-  };
-
-  document.getElementById('totalGames').textContent = stats.totalGames;
-  document.getElementById('wins').textContent = stats.wins;
-  document.getElementById('winRate').textContent = stats.totalGames > 0 ? ((stats.wins / stats.totalGames) * 100).toFixed(1) + '%' : '0%';
-  document.getElementById('currentStreak').textContent = stats.currentStreak;
-  document.getElementById('maxStreak').textContent = stats.maxStreak;
-
-  const achievementsList = document.getElementById('achievementsList');
-  achievementsList.innerHTML = '';
-  allAchievements.forEach(achievement => {
-    const li = document.createElement('li');
-    li.textContent = `${achievement.name}: ${achievement.description}`;
-    li.classList.add(stats.achievements.includes(achievement.id) ? 'unlocked' : 'locked');
-    achievementsList.appendChild(li);
-  });
-
-  // Reset stats button
-  document.getElementById('resetStatsBtn').addEventListener('click', () => {
-    if (confirm('Are you sure you want to reset all stats? This cannot be undone.')) {
-      localStorage.removeItem('gameStats');
-      loadStats(); // Reload to reflect reset
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', loadStats);
+    const stats = JSON.parse(localStorage.getItem('gameStats')) || {
+      totalGames: 0,
+      wins: 0,
+      totalGuesses: 0,
+      longestStreak: 0,
+      currentStreak: 0,
+      guessDistribution: Array(8).fill(0),
+      achievements: []
+    };
+  
+    document.getElementById('totalGames').textContent = stats.totalGames;
+    document.getElementById('winRate').textContent = stats.totalGames > 0 ? ((stats.wins / stats.totalGames) * 100).toFixed(1) + '%' : '0%';
+    document.getElementById('avgGuesses').textContent = stats.wins > 0 ? (stats.totalGuesses / stats.wins).toFixed(1) : '0';
+    document.getElementById('longestStreak').textContent = stats.longestStreak;
+  
+    const distribution = document.getElementById('guessDistribution');
+    stats.guessDistribution.forEach((count, index) => {
+      const bar = document.createElement('div');
+      bar.classList.add('distribution-bar');
+      const max = Math.max(...stats.guessDistribution, 1);
+      bar.style.width = `${(count / max) * 100}%`;
+      bar.textContent = count > 0 ? count : '';
+      const label = document.createElement('span');
+      label.textContent = `${index + 1}: `;
+      const container = document.createElement('div');
+      container.classList.add('distribution-row');
+      container.appendChild(label);
+      container.appendChild(bar);
+      distribution.appendChild(container);
+    });
+  
+    const achievementsList = document.getElementById('achievementsList');
+    const allAchievements = [
+      { id: 'firstWin', name: 'First Win', description: 'Win your first game' },
+      { id: 'streakMaster', name: 'Streak Master', description: 'Achieve a streak of 5 wins' },
+      { id: 'quickGuess', name: 'Quick Guess', description: 'Win in 3 guesses or fewer' }
+    ];
+    allAchievements.forEach(achievement => {
+      const li = document.createElement('li');
+      li.textContent = `${achievement.name}: ${achievement.description}`;
+      if (!stats.achievements.includes(achievement.id)) {
+        li.classList.add('locked');
+      }
+      achievementsList.appendChild(li);
+    });
+  
+    setupSoundToggle();
+    setupTimedModeToggle();
+    updateAuthLink();
+  }
   
   function setupSoundToggle() {
     const soundToggle = document.getElementById('soundToggle');
