@@ -1,3 +1,5 @@
+let minMinutesFilter = 100;
+let minGoalsAssistsFilter = 0;
 const teamMapping = {
   1: "Arsenal", 2: "Aston Villa", 3: "Bournemouth", 4: "Brentford", 5: "Brighton",
   6: "Chelsea", 7: "Crystal Palace", 8: "Everton", 9: "Fulham", 10: "Ipswich",
@@ -29,24 +31,24 @@ async function fetchFPLData() {
     const data = await response.json();
     if (!data.elements) throw new Error("Invalid JSON structure: 'elements' missing.");
 
-    const currentDate = new Date(); // Dynamic date, updates daily
+    const currentDate = new Date();
     players = data.elements
-      .filter(player => player.element_type >= 1 && player.element_type <= 4) // Exclude managers
+      .filter(player => player.element_type >= 1 && player.element_type <= 4)
       .map((player, index) => {
         let age = null;
         if (player.birth_date) {
           const birthDate = new Date(player.birth_date);
-          age = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 365.25)); // Accurate age
+          age = Math.floor((currentDate - birthDate) / (1000 * 60 * 60 * 24 * 365.25));
         } else {
-          age = Math.floor(Math.random() * 15) + 20; // Fallback
+          age = Math.floor(Math.random() * 15) + 20;
         }
 
         let timeAtTeam = null;
         if (player.team_join_date) {
           const joinDate = new Date(player.team_join_date);
-          timeAtTeam = Math.floor((currentDate - joinDate) / (1000 * 60 * 60 * 24)); // Days since joining
+          timeAtTeam = Math.floor((currentDate - joinDate) / (1000 * 60 * 60 * 24));
         } else {
-          timeAtTeam = -1; // Fallback: 100-1100 days
+          timeAtTeam = -1;
         }
 
         return {
@@ -56,14 +58,18 @@ async function fetchFPLData() {
           badgeId: badgeMapping[player.team],
           position: ['GKP', 'DEF', 'MID', 'FWD'][player.element_type - 1],
           age: age,
-          minutes: player.minutes, // Total minutes played this season
+          minutes: player.minutes,
           goals: player.goals_scored,
           assists: player.assists,
-          time_at_team: timeAtTeam, // Days at current team
+          time_at_team: timeAtTeam,
           code: player.code,
           index: index
         };
-      });
+      })
+      .filter(player => 
+        player.minutes >= minMinutesFilter && 
+        (player.goals + player.assists) >= minGoalsAssistsFilter
+      );
 
     spinner.style.display = 'none';
     return { players };
@@ -80,6 +86,34 @@ function getDailyPlayer(players) {
   const seed = today.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const index = seed % players.length;
   return players[index];
+}
+
+function setupAdvancedSettings() {
+  const toggleBtn = document.getElementById('toggleAdvancedBtn');
+  const advancedOptions = document.getElementById('advancedOptions');
+  const applyBtn = document.getElementById('applyAdvancedBtn');
+  const minMinutesInput = document.getElementById('minMinutes');
+  const minGoalsAssistsInput = document.getElementById('minGoalsAssists');
+
+  toggleBtn.addEventListener('click', () => {
+    advancedOptions.style.display = advancedOptions.style.display === 'none' ? 'block' : 'none';
+  });
+
+  applyBtn.addEventListener('click', async () => {
+    minMinutesFilter = parseInt(minMinutesInput.value) || 100;
+    minGoalsAssistsFilter = parseInt(minGoalsAssistsInput.value) || 0;
+    
+    // Reload players with new filters
+    const data = await fetchFPLData();
+    players = data.players;
+    if (players.length === 0) {
+      showModal('No players match these criteria. Please adjust your settings.');
+      return;
+    }
+    
+    randomizePlayer(); // Start a new game with filtered players
+    advancedOptions.style.display = 'none';
+  });
 }
 
 function setupAutocomplete() {
@@ -539,6 +573,7 @@ async function init() {
   setupMobileMenu();
   setupSoundToggle();
   setupTimedMode();
+  setupAdvancedSettings();
   updateAuthLink();
 }
 

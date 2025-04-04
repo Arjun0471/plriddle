@@ -194,6 +194,74 @@ header h1 {
   display: none;
 }
 
+.advanced-settings {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+}
+
+#toggleAdvancedBtn {
+  background: linear-gradient(45deg, #8b5cf6, #a78bfa);
+  width: 100%;
+  padding: 10px;
+}
+
+#toggleAdvancedBtn:hover {
+  background: linear-gradient(45deg, #7c3aed, #8b5cf6);
+}
+
+#advancedOptions {
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+}
+
+.advanced-option {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.advanced-option label {
+  flex: 1;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.advanced-option input {
+  width: 100px;
+  padding: 8px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1em;
+}
+
+#applyAdvancedBtn {
+  background: linear-gradient(45deg, #10b981, #34d399);
+  width: 100%;
+  margin-top: 15px;
+}
+
+#applyAdvancedBtn:hover {
+  background: linear-gradient(45deg, #059669, #10b981);
+}
+
+@media (max-width: 600px) {
+  .advanced-option {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .advanced-option input {
+    width: 100%;
+  }
+}
+
 main {
   flex: 1;
   max-width: 1200px;
