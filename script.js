@@ -1,6 +1,6 @@
-let allPlayers = []; // To store unfiltered player list
-let atkMidFilter = false;
-let defGkpFilter = false;
+let minMinutesMFFilter = 100;  // Minutes for Midfielders and Forwards
+let minGoalsAssistsFilter = 0; // Goals + Assists for Midfielders and Forwards
+let minMinutesGDFilter = 100;
 
 const teamMapping = {
   1: "Arsenal", 2: "Aston Villa", 3: "Bournemouth", 4: "Brentford", 5: "Brighton",
@@ -34,7 +34,7 @@ async function fetchFPLData() {
     if (!data.elements) throw new Error("Invalid JSON structure: 'elements' missing.");
 
     const currentDate = new Date();
-    allPlayers = data.elements
+    players = data.elements
       .filter(player => player.element_type >= 1 && player.element_type <= 4)
       .map((player, index) => {
         let age = null;
@@ -67,33 +67,15 @@ async function fetchFPLData() {
           code: player.code,
           index: index
         };
-      });
-
-    // Apply filters to create the playable players list
-    players = allPlayers.filter(player => {
-      if (atkMidFilter && defGkpFilter) {
-        return true; // If both filters are on, include all players
-      }
-      if (atkMidFilter) {
+      })
+      .filter(player => {
         if (player.position === 'MID' || player.position === 'FWD') {
           return player.minutes >= minMinutesMFFilter && 
                  (player.goals + player.assists) >= minGoalsAssistsFilter;
-        }
-        return false;
-      }
-      if (defGkpFilter) {
-        if (player.position === 'GKP' || player.position === 'DEF') {
+        } else { // GKP or DEF
           return player.minutes >= minMinutesGDFilter;
         }
-        return false;
-      }
-      // If no position filters, apply appropriate stat filters
-      if (player.position === 'MID' || player.position === 'FWD') {
-        return player.minutes >= minMinutesMFFilter && 
-               (player.goals + player.assists) >= minGoalsAssistsFilter;
-      }
-      return player.minutes >= minMinutesGDFilter;
-    });
+      });
 
     spinner.style.display = 'none';
     return { players };
@@ -119,8 +101,6 @@ function setupAdvancedSettings() {
   const minMinutesMFInput = document.getElementById('minMinutesMF');
   const minGoalsAssistsInput = document.getElementById('minGoalsAssists');
   const minMinutesGDInput = document.getElementById('minMinutesGD');
-  const atkMidToggle = document.getElementById('atkMidToggle');
-  const defGkpToggle = document.getElementById('defGkpToggle');
 
   toggleBtn.addEventListener('click', () => {
     advancedOptions.style.display = advancedOptions.style.display === 'none' ? 'block' : 'none';
@@ -130,8 +110,6 @@ function setupAdvancedSettings() {
     minMinutesMFFilter = parseInt(minMinutesMFInput.value) || 100;
     minGoalsAssistsFilter = parseInt(minGoalsAssistsInput.value) || 0;
     minMinutesGDFilter = parseInt(minMinutesGDInput.value) || 100;
-    atkMidFilter = atkMidToggle.checked;
-    defGkpFilter = defGkpToggle.checked;
     
     // Reload players with new filters
     const data = await fetchFPLData();
@@ -141,7 +119,7 @@ function setupAdvancedSettings() {
       return;
     }
     
-    randomizePlayer();
+    randomizePlayer(); // Start a new game with filtered players
     advancedOptions.style.display = 'none';
   });
 }
@@ -160,7 +138,7 @@ function setupAutocomplete() {
       return;
     }
 
-    const matches = allPlayers // Changed from players to allPlayers
+    const matches = players
       .filter(p => p.name.toLowerCase().includes(query))
       .slice(0, 5);
     if (matches.length > 0) {
@@ -641,7 +619,7 @@ function submitGuess() {
   playSound('guess');
   const input = document.getElementById('playerInput');
   const guessName = input.value.trim();
-  const guess = allPlayers.find(p => p.name.toLowerCase() === guessName.toLowerCase()); // Changed from players to allPlayers
+  const guess = players.find(p => p.name.toLowerCase() === guessName.toLowerCase());
 
   if (!guess) {
     alert('Invalid player name. Please try again.');
