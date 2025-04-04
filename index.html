@@ -57,6 +57,13 @@
         <div class="advanced-section">
           <h3>Forwards & Midfielders</h3>
           <div class="advanced-option">
+            <label for="atkMidToggle">Filter to only FWD/MID:</label>
+            <label class="switch">
+              <input type="checkbox" id="atkMidToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="advanced-option">
             <label for="minGoalsAssists">Minimum Goals + Assists:</label>
             <input type="number" id="minGoalsAssists" min="0" value="0">
           </div>
@@ -67,6 +74,13 @@
         </div>
         <div class="advanced-section">
           <h3>Goalkeepers & Defenders</h3>
+          <div class="advanced-option">
+            <label for="defGkpToggle">Filter to only DEF/GKP:</label>
+            <label class="switch">
+              <input type="checkbox" id="defGkpToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
           <div class="advanced-option">
             <label for="minMinutesGD">Minimum Minutes:</label>
             <input type="number" id="minMinutesGD" min="0" value="100">
