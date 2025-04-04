@@ -46,7 +46,7 @@ async function fetchFPLData() {
           const joinDate = new Date(player.team_join_date);
           timeAtTeam = Math.floor((currentDate - joinDate) / (1000 * 60 * 60 * 24)); // Days since joining
         } else {
-          timeAtTeam = Math.floor(Math.random() * 1000) + 100; // Fallback: 100-1100 days
+          timeAtTeam = -1; // Fallback: 100-1100 days
         }
 
         return {
@@ -183,6 +183,8 @@ function getRandomPlayer(players) {
     newPlayer = players[randomIndex];
   } while (newPlayer === lastPlayer && players.length > 1);
   lastPlayer = newPlayer;
+  if(newPlayer.minutes<=100)
+    newPlayer = getRandomPlayer(players);    
   return newPlayer;
 }
 
