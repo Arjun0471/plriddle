@@ -194,6 +194,7 @@ header h1 {
   display: none;
 }
 
+/* Replace the previous advanced settings styles with these */
 .advanced-settings {
   margin-bottom: 25px;
   padding: 15px;
@@ -218,6 +219,16 @@ header h1 {
   padding: 15px;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 6px;
+}
+
+.advanced-section {
+  margin-bottom: 20px;
+}
+
+.advanced-section h3 {
+  font-size: 1.2em;
+  color: #1d4ed8;
+  margin-bottom: 10px;
 }
 
 .advanced-option {
@@ -259,6 +270,10 @@ header h1 {
   
   .advanced-option input {
     width: 100%;
+  }
+  
+  .advanced-section h3 {
+    font-size: 1.1em;
   }
 }
 

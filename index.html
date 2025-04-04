@@ -50,17 +50,27 @@
       <button id="newPlayerBtn">New Player</button>
       <button id="getHintBtn">Get Hint</button>
     </div>
-    <!-- Add this after the silhouette-area div in index.html -->
+
     <div class="advanced-settings">
       <button id="toggleAdvancedBtn">Advanced Settings</button>
       <div id="advancedOptions" style="display: none;">
-        <div class="advanced-option">
-          <label for="minMinutes">Minimum Minutes Played:</label>
-          <input type="number" id="minMinutes" min="0" value="100">
+        <div class="advanced-section">
+          <h3>Forwards & Midfielders</h3>
+          <div class="advanced-option">
+            <label for="minGoalsAssists">Minimum Goals + Assists:</label>
+            <input type="number" id="minGoalsAssists" min="0" value="0">
+          </div>
+          <div class="advanced-option">
+            <label for="minMinutesMF">Minimum Minutes:</label>
+            <input type="number" id="minMinutesMF" min="0" value="100">
+          </div>
         </div>
-        <div class="advanced-option">
-          <label for="minGoalsAssists">Minimum Goals + Assists:</label>
-          <input type="number" id="minGoalsAssists" min="0" value="0">
+        <div class="advanced-section">
+          <h3>Goalkeepers & Defenders</h3>
+          <div class="advanced-option">
+            <label for="minMinutesGD">Minimum Minutes:</label>
+            <input type="number" id="minMinutesGD" min="0" value="100">
+          </div>
         </div>
         <button id="applyAdvancedBtn">Apply Settings</button>
       </div>

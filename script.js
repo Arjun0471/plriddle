@@ -1,5 +1,7 @@
-let minMinutesFilter = 100;
-let minGoalsAssistsFilter = 0;
+let minMinutesMFFilter = 100;  // Minutes for Midfielders and Forwards
+let minGoalsAssistsFilter = 0; // Goals + Assists for Midfielders and Forwards
+let minMinutesGDFilter = 100;
+
 const teamMapping = {
   1: "Arsenal", 2: "Aston Villa", 3: "Bournemouth", 4: "Brentford", 5: "Brighton",
   6: "Chelsea", 7: "Crystal Palace", 8: "Everton", 9: "Fulham", 10: "Ipswich",
@@ -66,10 +68,14 @@ async function fetchFPLData() {
           index: index
         };
       })
-      .filter(player => 
-        player.minutes >= minMinutesFilter && 
-        (player.goals + player.assists) >= minGoalsAssistsFilter
-      );
+      .filter(player => {
+        if (player.position === 'MID' || player.position === 'FWD') {
+          return player.minutes >= minMinutesMFFilter && 
+                 (player.goals + player.assists) >= minGoalsAssistsFilter;
+        } else { // GKP or DEF
+          return player.minutes >= minMinutesGDFilter;
+        }
+      });
 
     spinner.style.display = 'none';
     return { players };
@@ -92,16 +98,18 @@ function setupAdvancedSettings() {
   const toggleBtn = document.getElementById('toggleAdvancedBtn');
   const advancedOptions = document.getElementById('advancedOptions');
   const applyBtn = document.getElementById('applyAdvancedBtn');
-  const minMinutesInput = document.getElementById('minMinutes');
+  const minMinutesMFInput = document.getElementById('minMinutesMF');
   const minGoalsAssistsInput = document.getElementById('minGoalsAssists');
+  const minMinutesGDInput = document.getElementById('minMinutesGD');
 
   toggleBtn.addEventListener('click', () => {
     advancedOptions.style.display = advancedOptions.style.display === 'none' ? 'block' : 'none';
   });
 
   applyBtn.addEventListener('click', async () => {
-    minMinutesFilter = parseInt(minMinutesInput.value) || 100;
+    minMinutesMFFilter = parseInt(minMinutesMFInput.value) || 100;
     minGoalsAssistsFilter = parseInt(minGoalsAssistsInput.value) || 0;
+    minMinutesGDFilter = parseInt(minMinutesGDInput.value) || 100;
     
     // Reload players with new filters
     const data = await fetchFPLData();
